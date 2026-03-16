@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Assignment App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 95vw;
+            width: 100%;
+        }
+
+        .header {
+            margin-bottom: 0;
+            position: relative;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2em;
+            margin: 0 0 6px 0;
+            text-align: center;
+        }
+
+        .header-legends {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .group-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .status-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-label {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+        }
+
+        .section.units-section {
+            display: flex;
+            justify-content: center;
+        }
+
+        .section.units-section .units-pool {
+            max-width: 600px;
+        }
+
+        .unit-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .unit-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .unit-group-name {
+            font-weight: 600;
+            font-size: 1em;
+            color: #495057;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .unit-group-name:hover {
+            background: #e9ecef;
+        }
+
+        .unit-group-name-input {
+            font-weight: 600;
+            font-size: 1em;
+            color: #495057;
+            padding: 5px 10px;
+            border: 2px solid #667eea;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .unit-group-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .small-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background 0.2s;
+        }
+
+        .small-btn:hover {
+            background: #5a6268;
+        }
+
+        .add-group-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .add-group-form input {
+            padding: 8px 12px;
+            border: 2px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .color-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: #333;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
+        }
+
+        .section h2 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .units-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            min-height: 100px;
+        }
+
+        .unit {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: grab;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .unit * {
+            pointer-events: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .unit-hot-indicator {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            font-size: 16px;
+            line-height: 1;
+            pointer-events: none;
+        }
+
+        .unit-complete-indicator {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            font-size: 20px;
+            line-height: 1;
+            pointer-events: none;
+            color: #00ff00;
+        }
+
+        .unit-wait-indicator {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            font-size: 20px;
+            line-height: 1;
+            pointer-events: none;
+        }
+
+        .plan-arrow {
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .plan-arrow-line {
+            stroke-width: 3;
+            fill: none;
+            opacity: 0.5;
+        }
+
+        .unit.complete {
+            color: #00ff00 !important;
+        }
+
+        .unit:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .unit.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .unit-selection {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 2px solid #dee2e6;
+            margin-bottom: 10px;
+        }
+
+        .unit-selection-header {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .unit-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .unit-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .unit-checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .unit-checkbox-item label {
+            cursor: pointer;
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .select-all-btn {
+            padding: 5px 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 10px;
+        }
+
+        .select-all-btn:hover {
+            background: #5568d3;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 10px 12px;
+            border: 2px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 2px solid #dee2e6;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .modal-footer button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.95em;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .stations-list {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .station {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 70px;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .station-header {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 0.75em;
+        }
+
+        .station-units {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 40px;
+        }
+
+        .station.drag-over {
+            background: #e7f5ff;
+            border-color: #667eea;
+            transform: scale(1.02);
+        }
+
+        .empty-state {
+            color: #adb5bd;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .notes-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            max-width: 95vw;
+            width: 100%;
+        }
+
+        .notes-section h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 1em;
+        }
+
+        .notes-section textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9em;
+            resize: vertical;
+        }
+
+        .notes-display-section {
+            margin-bottom: 6px;
+        }
+
+        .section {
+            margin-bottom: 6px;
+        }
+        
+        .section.units-section {
+            margin-bottom: 12px;
+        }
+
+        .notes-display {
+            color: #495057;
+            font-size: 1.3em;
+            font-style: italic;
+            white-space: pre-wrap;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            min-height: 60px;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .reset-button {
+            background: #dc3545;
+        }
+
+        .reset-button:hover {
+            background: #c82333;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .screenshot-button {
+            padding: 12px 24px;
+            background: #212529;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .screenshot-button:hover {
+            background: #343a40;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .screenshot-button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Peregrine Catheter Build Status</h1>
+            <div class="header-legends">
+                <div class="group-legend" id="groupLegend"></div>
+                <div class="status-legend" id="statusLegend"></div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="notes-display-section">
+                <div class="notes-display" id="notesDisplay"></div>
+            </div>
+
+            <div class="section">
+                <h2>Shaft</h2>
+                <div class="stations-list" id="stationsList1">
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>Backend</h2>
+                <div class="stations-list" id="stationsList2">
+                </div>
+            </div>
+
+            <div class="section units-section">
+                <div style="width: 100%;">
+                    <h2>Available Units</h2>
+                    <div id="unitGroups"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="notes-section">
+            <h3>Notes</h3>
+            <textarea id="globalNotes" placeholder="Enter notes here..."></textarea>
+        </div>
+
+        <svg id="arrowContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#ffd700" fill-opacity="0.5" />
+                </marker>
+            </defs>
+        </svg>
+
+        <div class="controls">
+            <button class="reset-button" onclick="resetAssignments()">Reset All</button>
+            <button class="screenshot-button" onclick="takeScreenshot()">📸 Take Screenshot</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="unitModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Unit <span id="modalUnitNumber"></span> Information</h3>
+                <button class="modal-close" onclick="closeUnitModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="unitSelectionContainer" style="display: none;">
+                    <div class="unit-selection">
+                        <div class="unit-selection-header">
+                            Select Units to Modify:
+                            <button class="select-all-btn" onclick="selectAllUnits()">Select All</button>
+                            <button class="select-all-btn" onclick="deselectAllUnits()">Deselect All</button>
+                        </div>
+                        <div class="unit-checkboxes" id="unitCheckboxes"></div>
+                    </div>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="unitWaitEngineer">
+                    <label for="unitWaitEngineer">Wait for Engineer 🛑</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="unitHot">
+                    <label for="unitHot">Hot 🔥</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="unitComplete">
+                    <label for="unitComplete">Complete ✓</label>
+                </div>
+                <div class="form-group">
+                    <label for="unitNotes">Notes</label>
+                    <textarea id="unitNotes" placeholder="Enter notes..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="unitPlanForToday">Plan For Today</label>
+                    <select id="unitPlanForToday">
+                        <option value="">-- Select Station --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeUnitModal()">Cancel</button>
+                <button class="btn-save" onclick="saveUnitData()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let unitCounter = 1;
+        let stationCounter = 1;
+        let groupCounter = 1;
+        const unitGroups = [];
+        const unitData = {};
+
+        function saveState() {
+            const unitPositions = {};
+            document.querySelectorAll('.unit').forEach(unit => {
+                const unitId = unit.dataset.unitId;
+                const station = unit.closest('.station');
+                if (station) {
+                    const stationHeader = station.querySelector('.station-header');
+                    if (stationHeader) {
+                        unitPositions[unitId] = stationHeader.textContent.trim();
+                    }
+                }
+            });
+            
+            const state = {
+                unitCounter,
+                stationCounter,
+                groupCounter,
+                unitGroups,
+                unitData,
+                unitPositions,
+                notes: document.getElementById('globalNotes')?.value || ''
+            };
+            localStorage.setItem('unitAssignmentState', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('unitAssignmentState');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    unitCounter = state.unitCounter || 1;
+                    stationCounter = state.stationCounter || 1;
+                    groupCounter = state.groupCounter || 1;
+                    
+                    if (state.unitGroups && state.unitGroups.length > 0) {
+                        unitGroups.length = 0;
+                        unitGroups.push(...state.unitGroups);
+                    }
+                    
+                    if (state.unitData) {
+                        Object.keys(unitData).forEach(key => delete unitData[key]);
+                        Object.assign(unitData, state.unitData);
+                    }
+                    
+                    if (state.notes) {
+                        const notesTextarea = document.getElementById('globalNotes');
+                        const notesDisplay = document.getElementById('notesDisplay');
+                        if (notesTextarea) notesTextarea.value = state.notes;
+                        if (notesDisplay) notesDisplay.textContent = state.notes || 'These are the notes';
+                    }
+                    
+                    if (state.unitPositions) {
+                        setTimeout(() => {
+                            Object.keys(state.unitPositions).forEach(unitId => {
+                                const stationName = state.unitPositions[unitId];
+                                const unitElement = document.getElementById(`unit-${unitId}`);
+                                
+                                if (unitElement) {
+                                    const stations = document.querySelectorAll('.station');
+                                    stations.forEach(station => {
+                                        const header = station.querySelector('.station-header');
+                                        if (header && header.textContent.trim() === stationName) {
+                                            const unitsContainer = station.querySelector('.station-units');
+                                            if (unitsContainer) {
+                                                unitsContainer.appendChild(unitElement);
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                            drawAllPlanArrows();
+                        }, 100);
+                    }
+                    
+                    return true;
+                } catch (e) {
+                    console.error('Error loading saved state:', e);
+                    return false;
+                }
+            }
+            return false;
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            const notesTextarea = document.getElementById('globalNotes');
+            if (notesTextarea) {
+                notesTextarea.addEventListener('input', (e) => {
+                    const notesDisplay = document.getElementById('notesDisplay');
+                    if (notesDisplay) {
+                        notesDisplay.textContent = e.target.value || 'These are the notes';
+                    }
+                    saveState();
+                });
+            }
+        });
+
+        const stationNames = [
+            'AJ Stack',
+            'Stuffing',
+            'CR / AJ Shaft Insert',
+            'Proximal Cap Glue',
+            'Resistance Weld',
+            'Distal Flare',
+            'Bar Capture',
+            'Tip Ring Weld',
+            'Shaft Collar Glue',
+            'PW Crimp',
+            'Anchor Plate Weld',
+            'Shaft Integration & Inputs',
+            'Tensioning',
+            'Fiber Integration',
+            'AJJ Insertion',
+            'AJJ Weld',
+            'IPT 1.0',
+            'IPT 2.0',
+            'US Weld Cover',
+            'Proximal WC  Trim',
+            'TC Weld',
+            'Verification',
+            'Authentication'
+        ];
+
+        function initializeApp() {
+            stationNames.forEach((name, index) => {
+                const listId = index < 11 ? 'stationsList1' : 'stationsList2';
+                createStation(name, listId);
+            });
+            
+            populatePlanForTodayDropdown();
+            
+            const hasLoadedState = loadState();
+            
+            if (!hasLoadedState) {
+                createUnitGroup('Group 1', '#667eea');
+                addUnitToGroup(0, 5);
+            } else {
+                renderUnitGroups();
+                updateLegend();
+                drawAllPlanArrows();
+            }
+        }
+
+        function populatePlanForTodayDropdown() {
+            const dropdown = document.getElementById('unitPlanForToday');
+            stationNames.forEach(stationName => {
+                const option = document.createElement('option');
+                option.value = stationName;
+                option.textContent = stationName;
+                dropdown.appendChild(option);
+            });
+        }
+
+        const availableColors = [
+            { name: 'Purple', value: '#667eea' },
+            { name: 'Green', value: '#28a745' },
+            { name: 'Hot Pink', value: '#ff1493' },
+            { name: 'Tan', value: '#d2b48c' },
+            { name: 'Black', value: '#212529' }
+        ];
+
+        function createUnitGroup(name, color) {
+            const group = {
+                id: groupCounter++,
+                name: name,
+                color: color,
+                units: [],
+                unitCounter: 1
+            };
+            unitGroups.push(group);
+            renderUnitGroups();
+            return group;
+        }
+
+        function editGroupName(groupIndex) {
+            const group = unitGroups[groupIndex];
+            if (!group) return;
+            
+            const newName = prompt('Enter new group name:', group.name);
+            if (newName && newName.trim()) {
+                group.name = newName.trim();
+                
+                group.units.forEach(unitId => {
+                    const unitElement = document.getElementById(`unit-${unitId}`);
+                    if (unitElement) {
+                        const unitNumber = unitId.split('-')[1];
+                        let tooltipText = `${group.name} - Unit ${unitNumber}`;
+                        if (unitData[unitId] && unitData[unitId].notes) {
+                            tooltipText += `\nNotes: ${unitData[unitId].notes}`;
+                        }
+                        unitElement.title = tooltipText;
+                    }
+                });
+                
+                renderUnitGroups();
+            }
+        }
+
+        function addUnitToGroup(groupIndex, count = 1) {
+            const group = unitGroups[groupIndex];
+            if (!group) return;
+            
+            for (let i = 0; i < count; i++) {
+                const unitNumber = group.unitCounter++;
+                const unitId = `${group.id}-${unitNumber}`;
+                group.units.push(unitId);
+            }
+            renderUnitGroups();
+        }
+
+        function removeUnitGroup(groupIndex) {
+            const group = unitGroups[groupIndex];
+            if (!group) return;
+            
+            group.units.forEach(unitId => {
+                const unitElement = document.getElementById(`unit-${unitId}`);
+                if (unitElement) {
+                    unitElement.remove();
+                }
+            });
+            
+            unitGroups.splice(groupIndex, 1);
+            renderUnitGroups();
+            updateLegend();
+        }
+
+        function updateLegend() {
+            const groupLegend = document.getElementById('groupLegend');
+            const statusLegend = document.getElementById('statusLegend');
+            
+            if (groupLegend) {
+                groupLegend.innerHTML = '';
+                
+                unitGroups.forEach(group => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'legend-color';
+                    colorBox.style.background = group.color;
+                    
+                    const label = document.createElement('span');
+                    label.className = 'legend-label';
+                    label.textContent = `${group.name} - Qty ${group.units.length}`;
+                    
+                    legendItem.appendChild(colorBox);
+                    legendItem.appendChild(label);
+                    groupLegend.appendChild(legendItem);
+                });
+            }
+            
+            if (statusLegend) {
+                statusLegend.innerHTML = '';
+                
+                const statusLegends = [
+                    { symbol: '🔥', label: 'Hot' },
+                    { symbol: '🛑', label: 'Wait for Engineer' },
+                    { symbol: '✓', label: 'Complete' }
+                ];
+                
+                statusLegends.forEach(status => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    
+                    const symbolBox = document.createElement('div');
+                    symbolBox.className = 'legend-color';
+                    symbolBox.style.background = 'transparent';
+                    symbolBox.style.border = 'none';
+                    symbolBox.textContent = status.symbol;
+                    symbolBox.style.fontSize = '14px';
+                    symbolBox.style.display = 'flex';
+                    symbolBox.style.alignItems = 'center';
+                    symbolBox.style.justifyContent = 'center';
+                    
+                    const label = document.createElement('span');
+                    label.className = 'legend-label';
+                    label.textContent = status.label;
+                    
+                    legendItem.appendChild(symbolBox);
+                    legendItem.appendChild(label);
+                    statusLegend.appendChild(legendItem);
+                });
+            }
+        }
+
+        function renderUnitGroups() {
+            const container = document.getElementById('unitGroups');
+            container.innerHTML = '';
+            
+            updateLegend();
+            saveState();
+            
+            unitGroups.forEach((group, index) => {
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'unit-group-header';
+                
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'unit-group-title';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = group.name;
+                nameSpan.style.color = group.color;
+                nameSpan.style.cursor = 'pointer';
+                nameSpan.onclick = () => editGroupName(index);
+                
+                const qtySpan = document.createElement('span');
+                qtySpan.textContent = ` - Qty ${group.units.length}`;
+                qtySpan.style.color = '#6c757d';
+                qtySpan.style.fontSize = '0.9em';
+                qtySpan.style.marginLeft = '8px';
+                
+                groupTitle.appendChild(nameSpan);
+                groupTitle.appendChild(qtySpan);
+                
+                const controls = document.createElement('div');
+                controls.className = 'unit-group-controls';
+                
+                const addBtn = document.createElement('button');
+                addBtn.className = 'small-btn';
+                addBtn.textContent = '+ Add Unit';
+                addBtn.onclick = () => addUnitToGroup(index);
+                
+                const editGroupBtn = document.createElement('button');
+                editGroupBtn.className = 'small-btn';
+                editGroupBtn.textContent = "Edit Group's Data";
+                editGroupBtn.onclick = () => openGroupModal(index);
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'small-btn';
+                removeBtn.textContent = 'Remove Group';
+                removeBtn.onclick = () => removeUnitGroup(index);
+                
+                controls.appendChild(addBtn);
+                controls.appendChild(editGroupBtn);
+                controls.appendChild(removeBtn);
+                
+                groupHeader.appendChild(groupTitle);
+                groupHeader.appendChild(controls);
+                
+                const unitsPool = document.createElement('div');
+                unitsPool.className = 'units-pool';
+                unitsPool.id = `group-${group.id}-pool`;
+                
+                group.units.forEach(unitId => {
+                    if (document.getElementById(`unit-${unitId}`)) {
+                        return;
+                    }
+                    
+                    const unitNumber = unitId.split('-')[1];
+                    const unit = document.createElement('div');
+                    unit.className = 'unit';
+                    unit.draggable = true;
+                    unit.id = `unit-${unitId}`;
+                    unit.textContent = unitNumber;
+                    unit.style.background = group.color;
+                    unit.dataset.groupId = group.id;
+                    unit.dataset.unitId = unitId;
+                    
+                    let tooltipText = `${group.name} - Unit ${unitNumber}`;
+                    if (unitData[unitId] && unitData[unitId].notes) {
+                        tooltipText += `\nNotes: ${unitData[unitId].notes}`;
+                    }
+                    unit.title = tooltipText;
+                    
+                    if (group.color === '#d2b48c') {
+                        unit.style.color = '#000000';
+                    }
+                    
+                    if (unitData[unitId] && unitData[unitId].waitEngineer) {
+                        const waitIndicator = document.createElement('span');
+                        waitIndicator.className = 'unit-wait-indicator';
+                        waitIndicator.textContent = '🛑';
+                        unit.appendChild(waitIndicator);
+                    }
+                    
+                    if (unitData[unitId] && unitData[unitId].complete) {
+                        unit.classList.add('complete');
+                        const completeIndicator = document.createElement('span');
+                        completeIndicator.className = 'unit-complete-indicator';
+                        completeIndicator.textContent = '✓';
+                        unit.appendChild(completeIndicator);
+                    } else if (unitData[unitId] && unitData[unitId].hot) {
+                        const hotIndicator = document.createElement('span');
+                        hotIndicator.className = 'unit-hot-indicator';
+                        hotIndicator.textContent = '🔥';
+                        unit.appendChild(hotIndicator);
+                    }
+                    
+                    let isDragging = false;
+                    let dragStartTime = 0;
+                    
+                    unit.addEventListener('mousedown', function() {
+                        isDragging = false;
+                        dragStartTime = Date.now();
+                    });
+                    
+                    unit.addEventListener('dragstart', function(e) {
+                        isDragging = true;
+                        handleDragStart(e);
+                    });
+                    
+                    unit.addEventListener('dragend', handleDragEnd);
+                    
+                    unit.addEventListener('click', function(e) {
+                        const clickDuration = Date.now() - dragStartTime;
+                        if (!isDragging && clickDuration < 200) {
+                            openUnitModal(unitId);
+                        }
+                    });
+                    
+                    unitsPool.appendChild(unit);
+                });
+                
+                unitsPool.addEventListener('dragover', handleDragOver);
+                unitsPool.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (draggedElement) {
+                        unitsPool.appendChild(draggedElement);
+                    }
+                });
+                
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'unit-group';
+                
+                groupDiv.appendChild(groupHeader);
+                groupDiv.appendChild(unitsPool);
+                container.appendChild(groupDiv);
+            });
+            
+            const addGroupForm = document.createElement('div');
+            addGroupForm.className = 'add-group-form';
+            
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.id = 'newGroupName';
+            nameInput.placeholder = 'Group Name';
+            nameInput.value = `Group ${groupCounter}`;
+            
+            const colorSelector = document.createElement('div');
+            colorSelector.className = 'color-selector';
+            
+            availableColors.forEach((color, idx) => {
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                if (idx === 1) colorOption.classList.add('selected');
+                colorOption.style.background = color.value;
+                colorOption.title = color.name;
+                colorOption.dataset.color = color.value;
+                colorOption.onclick = function() {
+                    document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                };
+                colorSelector.appendChild(colorOption);
+            });
+            
+            const addButton = document.createElement('button');
+            addButton.textContent = 'Add New Group';
+            addButton.onclick = addNewGroup;
+            
+            addGroupForm.appendChild(nameInput);
+            addGroupForm.appendChild(colorSelector);
+            addGroupForm.appendChild(addButton);
+            container.appendChild(addGroupForm);
+        }
+
+        function addNewGroup() {
+            const nameInput = document.getElementById('newGroupName');
+            const selectedColor = document.querySelector('.color-option.selected');
+            
+            const name = nameInput.value.trim() || `Group ${groupCounter}`;
+            const color = selectedColor ? selectedColor.dataset.color : availableColors[0].value;
+            
+            createUnitGroup(name, color);
+            addUnitToGroup(unitGroups.length - 1, 1);
+        }
+
+
+        function createStation(name, listId) {
+            const stationsList = document.getElementById(listId || 'stationsList1');
+            const station = document.createElement('div');
+            station.className = 'station';
+            station.id = `station-${stationCounter}`;
+            
+            const header = document.createElement('div');
+            header.className = 'station-header';
+            header.textContent = name || `Station ${stationCounter}`;
+            
+            const unitsContainer = document.createElement('div');
+            unitsContainer.className = 'station-units';
+            
+            station.appendChild(header);
+            station.appendChild(unitsContainer);
+            
+            station.addEventListener('dragover', handleDragOver);
+            station.addEventListener('drop', handleDrop);
+            station.addEventListener('dragleave', handleDragLeave);
+            
+            stationsList.appendChild(station);
+            stationCounter++;
+        }
+
+
+        function addStation() {
+            createStation();
+        }
+
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const station = e.target.closest('.station');
+            if (station) {
+                station.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            const station = e.target.closest('.station');
+            if (station && !station.contains(e.relatedTarget)) {
+                station.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            
+            const station = e.target.closest('.station');
+            if (station) {
+                station.classList.remove('drag-over');
+                
+                const unitsContainer = station.querySelector('.station-units');
+                if (draggedElement) {
+                    unitsContainer.appendChild(draggedElement);
+                    setTimeout(() => {
+                        drawAllPlanArrows();
+                        saveState();
+                    }, 50);
+                }
+            }
+        }
+
+        function resetAssignments() {
+            const allUnits = document.querySelectorAll('.unit');
+            
+            allUnits.forEach(unit => {
+                const unitId = unit.dataset.unitId;
+                
+                if (unitData[unitId]) {
+                    unitData[unitId] = {
+                        notes: '',
+                        hot: false,
+                        complete: false,
+                        waitEngineer: false,
+                        planForToday: ''
+                    };
+                    updateUnitAppearance(unit, unitId);
+                }
+                
+                const groupId = unit.dataset.groupId;
+                const groupPool = document.getElementById(`group-${groupId}-pool`);
+                if (groupPool) {
+                    groupPool.appendChild(unit);
+                }
+            });
+            
+            const globalNotes = document.getElementById('globalNotes');
+            const notesDisplay = document.getElementById('notesDisplay');
+            if (globalNotes) globalNotes.value = '';
+            if (notesDisplay) notesDisplay.textContent = '';
+            
+            setTimeout(() => {
+                drawAllPlanArrows();
+                saveState();
+            }, 50);
+        }
+
+        let currentEditingUnit = null;
+        let currentEditingGroup = null;
+        let isGroupEdit = false;
+
+        function openUnitModal(unitId) {
+            currentEditingUnit = unitId;
+            currentEditingGroup = null;
+            isGroupEdit = false;
+            const modal = document.getElementById('unitModal');
+            const unitNumber = document.getElementById('modalUnitNumber');
+            
+            const groupId = unitId.split('-')[0];
+            const unitNum = unitId.split('-')[1];
+            const group = unitGroups.find(g => g.id == groupId);
+            const groupName = group ? group.name : 'Unknown';
+            
+            unitNumber.textContent = `${unitNum} (${groupName})`;
+            
+            if (!unitData[unitId]) {
+                unitData[unitId] = {
+                    notes: '',
+                    hot: false,
+                    complete: false,
+                    waitEngineer: false,
+                    planForToday: ''
+                };
+            }
+            
+            const data = unitData[unitId];
+            document.getElementById('unitNotes').value = data.notes || '';
+            document.getElementById('unitHot').checked = data.hot || false;
+            document.getElementById('unitComplete').checked = data.complete || false;
+            document.getElementById('unitWaitEngineer').checked = data.waitEngineer || false;
+            document.getElementById('unitPlanForToday').value = data.planForToday || '';
+            
+            modal.classList.add('active');
+        }
+
+        function openGroupModal(groupIndex) {
+            const group = unitGroups[groupIndex];
+            if (!group || group.units.length === 0) return;
+            
+            currentEditingGroup = groupIndex;
+            currentEditingUnit = null;
+            isGroupEdit = true;
+            const modal = document.getElementById('unitModal');
+            const unitNumber = document.getElementById('modalUnitNumber');
+            
+            unitNumber.textContent = `${group.name} (Select Units)`;
+            
+            const unitSelectionContainer = document.getElementById('unitSelectionContainer');
+            unitSelectionContainer.style.display = 'block';
+            
+            const checkboxContainer = document.getElementById('unitCheckboxes');
+            checkboxContainer.innerHTML = '';
+            
+            group.units.forEach(unitId => {
+                const unitNum = unitId.split('-')[1];
+                const checkboxItem = document.createElement('div');
+                checkboxItem.className = 'unit-checkbox-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `unit-select-${unitId}`;
+                checkbox.value = unitId;
+                checkbox.checked = true;
+                
+                const label = document.createElement('label');
+                label.htmlFor = `unit-select-${unitId}`;
+                label.textContent = `Unit ${unitNum}`;
+                
+                checkboxItem.appendChild(checkbox);
+                checkboxItem.appendChild(label);
+                checkboxContainer.appendChild(checkboxItem);
+            });
+            
+            const firstUnitId = group.units[0];
+            const data = unitData[firstUnitId] || {};
+            
+            document.getElementById('unitNotes').value = data.notes || '';
+            document.getElementById('unitHot').checked = data.hot || false;
+            document.getElementById('unitComplete').checked = data.complete || false;
+            document.getElementById('unitWaitEngineer').checked = data.waitEngineer || false;
+            document.getElementById('unitPlanForToday').value = data.planForToday || '';
+            
+            modal.classList.add('active');
+        }
+
+        function closeUnitModal() {
+            const modal = document.getElementById('unitModal');
+            modal.classList.remove('active');
+            const unitSelectionContainer = document.getElementById('unitSelectionContainer');
+            unitSelectionContainer.style.display = 'none';
+            currentEditingUnit = null;
+            currentEditingGroup = null;
+            isGroupEdit = false;
+        }
+
+        function selectAllUnits() {
+            const checkboxes = document.querySelectorAll('#unitCheckboxes input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = true);
+        }
+
+        function deselectAllUnits() {
+            const checkboxes = document.querySelectorAll('#unitCheckboxes input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+
+        function updateUnitAppearance(unitElement, unitId) {
+            const data = unitData[unitId];
+            if (!data) return;
+            
+            const existingIndicators = unitElement.querySelectorAll('.unit-hot-indicator, .unit-complete-indicator, .unit-wait-indicator');
+            existingIndicators.forEach(ind => ind.remove());
+            
+            unitElement.classList.remove('complete');
+            
+            const groupId = unitId.split('-')[0];
+            const unitNumber = unitId.split('-')[1];
+            const group = unitGroups.find(g => g.id == groupId);
+            
+            let tooltipText = group ? `${group.name} - Unit ${unitNumber}` : `Unit ${unitNumber}`;
+            if (data.notes) {
+                tooltipText += `\nNotes: ${data.notes}`;
+            }
+            unitElement.title = tooltipText;
+            
+            if (group && group.color === '#d2b48c') {
+                unitElement.style.color = '#000000';
+            } else {
+                unitElement.style.color = '';
+            }
+            
+            if (data.waitEngineer) {
+                const waitIndicator = document.createElement('span');
+                waitIndicator.className = 'unit-wait-indicator';
+                waitIndicator.textContent = '🛑';
+                unitElement.appendChild(waitIndicator);
+            }
+            
+            if (data.complete) {
+                unitElement.classList.add('complete');
+                const completeIndicator = document.createElement('span');
+                completeIndicator.className = 'unit-complete-indicator';
+                completeIndicator.textContent = '✓';
+                unitElement.appendChild(completeIndicator);
+            } else if (data.hot) {
+                const hotIndicator = document.createElement('span');
+                hotIndicator.className = 'unit-hot-indicator';
+                hotIndicator.textContent = '🔥';
+                unitElement.appendChild(hotIndicator);
+            }
+        }
+
+        function saveUnitData() {
+            const formData = {
+                notes: document.getElementById('unitNotes').value,
+                hot: document.getElementById('unitHot').checked,
+                complete: document.getElementById('unitComplete').checked,
+                waitEngineer: document.getElementById('unitWaitEngineer').checked,
+                planForToday: document.getElementById('unitPlanForToday').value
+            };
+            
+            if (isGroupEdit && currentEditingGroup !== null) {
+                const group = unitGroups[currentEditingGroup];
+                if (group) {
+                    const selectedCheckboxes = document.querySelectorAll('#unitCheckboxes input[type="checkbox"]:checked');
+                    const selectedUnitIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+                    
+                    selectedUnitIds.forEach(unitId => {
+                        unitData[unitId] = { ...formData };
+                        const unitElement = document.getElementById(`unit-${unitId}`);
+                        if (unitElement) {
+                            updateUnitAppearance(unitElement, unitId);
+                        }
+                    });
+                }
+            } else if (currentEditingUnit) {
+                unitData[currentEditingUnit] = formData;
+                const unitElement = document.getElementById(`unit-${currentEditingUnit}`);
+                if (unitElement) {
+                    updateUnitAppearance(unitElement, currentEditingUnit);
+                }
+            }
+            
+            drawAllPlanArrows();
+            saveState();
+            closeUnitModal();
+        }
+
+        function drawAllPlanArrows() {
+            const svg = document.getElementById('arrowContainer');
+            const existingArrows = svg.querySelectorAll('.plan-arrow-line');
+            existingArrows.forEach(arrow => arrow.remove());
+            
+            Object.keys(unitData).forEach(unitId => {
+                const data = unitData[unitId];
+                if (data && data.planForToday) {
+                    drawPlanArrow(unitId, data.planForToday);
+                }
+            });
+        }
+
+        function drawPlanArrow(unitId, stationName) {
+            const unitElement = document.getElementById(`unit-${unitId}`);
+            if (!unitElement) return;
+            
+            const groupId = unitId.split('-')[0];
+            const group = unitGroups.find(g => g.id == groupId);
+            if (!group) return;
+            
+            const groupColor = group.color;
+            
+            const stations = document.querySelectorAll('.station');
+            let targetStation = null;
+            
+            stations.forEach(station => {
+                const header = station.querySelector('.station-header');
+                if (header && header.textContent.trim() === stationName) {
+                    targetStation = station;
+                }
+            });
+            
+            if (!targetStation) return;
+            
+            const unitRect = unitElement.getBoundingClientRect();
+            const stationRect = targetStation.getBoundingClientRect();
+            const container = document.querySelector('.container');
+            const containerRect = container.getBoundingClientRect();
+            
+            const unitCenterX = unitRect.left + unitRect.width / 2;
+            const unitCenterY = unitRect.top + unitRect.height / 2;
+            const unitRadius = unitRect.width / 2;
+            
+            const header = targetStation.querySelector('.station-header');
+            const headerRect = header.getBoundingClientRect();
+            
+            const headerLeft = headerRect.left;
+            const headerTop = headerRect.top + headerRect.height / 2;
+            
+            const dx = headerLeft - unitCenterX;
+            const dy = headerTop - unitCenterY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance === 0) return;
+            
+            const unitEdgeX = unitCenterX + (dx / distance) * unitRadius;
+            const unitEdgeY = unitCenterY + (dy / distance) * unitRadius;
+            
+            const startX = unitEdgeX;
+            const startY = unitEdgeY;
+            
+            const endX = headerLeft;
+            const endY = headerTop;
+            
+            const svg = document.getElementById('arrowContainer');
+            
+            const markerId = `arrowhead-${groupId}`;
+            let marker = document.getElementById(markerId);
+            if (!marker) {
+                const defs = svg.querySelector('defs');
+                marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', markerId);
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '10');
+                marker.setAttribute('refX', '9');
+                marker.setAttribute('refY', '3');
+                marker.setAttribute('orient', 'auto');
+                
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', '0 0, 10 3, 0 6');
+                polygon.setAttribute('fill', groupColor);
+                polygon.setAttribute('fill-opacity', '0.5');
+                
+                marker.appendChild(polygon);
+                defs.appendChild(marker);
+            }
+            
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            const controlX = (startX + endX) / 2;
+            const controlY = Math.min(startY, endY) - 50;
+            
+            const d = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
+            path.setAttribute('d', d);
+            path.setAttribute('class', 'plan-arrow-line');
+            path.setAttribute('stroke', groupColor);
+            path.setAttribute('marker-end', `url(#${markerId})`);
+            
+            svg.appendChild(path);
+        }
+
+        window.addEventListener('resize', drawAllPlanArrows);
+        window.addEventListener('scroll', drawAllPlanArrows);
+
+        const globalNotesElement = document.getElementById('globalNotes');
+        if (globalNotesElement) {
+            globalNotesElement.addEventListener('input', function(e) {
+                const notesDisplay = document.getElementById('notesDisplay');
+                if (notesDisplay) {
+                    notesDisplay.textContent = e.target.value;
+                }
+            });
+        }
+
+        document.getElementById('unitModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUnitModal();
+            }
+        });
+
+        async function takeScreenshot() {
+            const container = document.querySelector('.container');
+            const availableUnitsSection = document.querySelector('.units-section');
+            const controls = document.querySelector('.controls');
+            const notesInputSection = document.querySelector('.notes-section');
+            const screenshotButton = document.querySelector('.screenshot-button');
+            const svg = document.getElementById('arrowContainer');
+            
+            const originalScrollY = window.scrollY;
+            const originalOverflow = document.body.style.overflow;
+            
+            document.body.style.overflow = 'hidden';
+            window.scrollTo(0, 0);
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            availableUnitsSection.style.display = 'none';
+            controls.style.display = 'none';
+            if (notesInputSection) notesInputSection.style.display = 'none';
+            screenshotButton.style.display = 'none';
+            
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            drawAllPlanArrows();
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            window.scrollTo(0, 0);
+            
+            try {
+                const canvas = await html2canvas(container, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                });
+                
+                canvas.toBlob(async (blob) => {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        
+                        const userChoice = confirm('Screenshot copied to clipboard!\n\nClick OK to also download the image, or Cancel to skip download.');
+                        
+                        if (userChoice) {
+                            const url = canvas.toDataURL('image/png');
+                            const link = document.createElement('a');
+                            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                            link.download = `build-status-${timestamp}.png`;
+                            link.href = url;
+                            link.click();
+                        }
+                    } catch (clipboardError) {
+                        const url = canvas.toDataURL('image/png');
+                        const link = document.createElement('a');
+                        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                        link.download = `build-status-${timestamp}.png`;
+                        link.href = url;
+                        link.click();
+                        alert('Screenshot downloaded! (Clipboard access not available)');
+                    }
+                });
+            } catch (error) {
+                alert('Error taking screenshot: ' + error.message);
+            } finally {
+                availableUnitsSection.style.display = '';
+                controls.style.display = '';
+                if (notesInputSection) notesInputSection.style.display = '';
+                screenshotButton.style.display = '';
+                svg.style.display = '';
+                document.body.style.overflow = originalOverflow;
+                window.scrollTo(0, originalScrollY);
+                drawAllPlanArrows();
+            }
+        }
+
+        initializeApp();
+    </script>
+</body>
+</html>

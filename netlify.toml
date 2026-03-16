@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+  command = "echo 'No build required - static HTML'"
+
+[[redirects]]
+  from = "/*"
+  to = "/unit-assignment.html"
+  status = 200
