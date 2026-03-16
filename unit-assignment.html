@@ -630,6 +630,155 @@
             align-items: center;
         }
 
+        .station-management {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .station-management-content {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .station-management-content.visible {
+            display: block;
+        }
+
+        .toggle-management-btn {
+            background: #6c757d;
+            width: 100%;
+            text-align: center;
+        }
+
+        .toggle-management-btn:hover {
+            background: #5a6268;
+        }
+
+        .station-management h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1.2em;
+        }
+
+        .section-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .section-group {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .section-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .section-group-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .section-group-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .section-stations {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .station-tag {
+            background: #e9ecef;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .station-tag-name {
+            cursor: pointer;
+        }
+
+        .station-tag-name:hover {
+            text-decoration: underline;
+        }
+
+        .station-tag-remove {
+            cursor: pointer;
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .station-tag-remove:hover {
+            color: #c82333;
+        }
+
+        .add-section-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .add-section-form input {
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 1em;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .title-editor {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        .title-editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-editor-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 1em;
+        }
+
+        .current-title {
+            color: #667eea;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        .small-btn {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
         .reset-button {
             background: #dc3545;
         }
@@ -735,6 +884,24 @@
             <textarea id="globalNotes" placeholder="Enter notes here..."></textarea>
         </div>
 
+        <div class="station-management">
+            <button class="toggle-management-btn" onclick="toggleStationManagement()">⚙️ Manage Station Sections</button>
+            <div class="station-management-content" id="stationManagementContent">
+                <div class="title-editor">
+                    <div class="title-editor-header">
+                        <span class="title-editor-label">Main Title:</span>
+                        <button class="small-btn" onclick="editMainTitle()">Edit Title</button>
+                    </div>
+                    <div class="current-title" id="currentTitleDisplay">Peregrine Catheter Build Status</div>
+                </div>
+                <div class="section-groups" id="sectionGroups"></div>
+                <div class="add-section-form">
+                    <input type="text" id="newSectionName" placeholder="New Section Name (e.g., 'Testing')">
+                    <button onclick="addSectionGroup()">+ Add Section</button>
+                </div>
+            </div>
+        </div>
+
         <svg id="arrowContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5;">
             <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
@@ -802,6 +969,12 @@
         let groupCounter = 1;
         const unitGroups = [];
         const unitData = {};
+        const sectionGroups = [
+            { id: 1, name: 'Shaft', listId: 'stationsList1' },
+            { id: 2, name: 'Backend', listId: 'stationsList2' }
+        ];
+        let sectionGroupCounter = 3;
+        let mainTitle = 'Peregrine Catheter Build Status';
 
         function saveState() {
             const unitPositions = {};
@@ -823,6 +996,9 @@
                 unitGroups,
                 unitData,
                 unitPositions,
+                sectionGroups,
+                sectionGroupCounter,
+                mainTitle,
                 notes: document.getElementById('globalNotes')?.value || ''
             };
             localStorage.setItem('unitAssignmentState', JSON.stringify(state));
@@ -836,6 +1012,8 @@
                     unitCounter = state.unitCounter || 1;
                     stationCounter = state.stationCounter || 1;
                     groupCounter = state.groupCounter || 1;
+                    sectionGroupCounter = state.sectionGroupCounter || 3;
+                    mainTitle = state.mainTitle || 'Peregrine Catheter Build Status';
                     
                     if (state.unitGroups && state.unitGroups.length > 0) {
                         unitGroups.length = 0;
@@ -846,6 +1024,16 @@
                         Object.keys(unitData).forEach(key => delete unitData[key]);
                         Object.assign(unitData, state.unitData);
                     }
+                    
+                    if (state.sectionGroups) {
+                        sectionGroups.length = 0;
+                        sectionGroups.push(...state.sectionGroups);
+                    }
+                    
+                    const titleElement = document.querySelector('.title');
+                    const titleDisplay = document.getElementById('currentTitleDisplay');
+                    if (titleElement) titleElement.textContent = mainTitle;
+                    if (titleDisplay) titleDisplay.textContent = mainTitle;
                     
                     if (state.notes) {
                         const notesTextarea = document.getElementById('globalNotes');
@@ -926,14 +1114,17 @@
         ];
 
         function initializeApp() {
+            const hasLoadedState = loadState();
+            
+            rebuildSections();
+            
             stationNames.forEach((name, index) => {
                 const listId = index < 11 ? 'stationsList1' : 'stationsList2';
                 createStation(name, listId);
             });
             
             populatePlanForTodayDropdown();
-            
-            const hasLoadedState = loadState();
+            renderSectionGroups();
             
             if (!hasLoadedState) {
                 createUnitGroup('Group 1', '#667eea');
@@ -1680,6 +1871,255 @@
             path.setAttribute('marker-end', `url(#${markerId})`);
             
             svg.appendChild(path);
+        }
+
+        function rebuildSections() {
+            const contentDiv = document.querySelector('.content');
+            const existingSections = contentDiv.querySelectorAll('.section:not(.units-section)');
+            existingSections.forEach(section => section.remove());
+            
+            const notesSection = contentDiv.querySelector('.notes-display-section');
+            
+            for (let i = sectionGroups.length - 1; i >= 0; i--) {
+                const sectionGroup = sectionGroups[i];
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'section';
+                
+                const heading = document.createElement('h2');
+                heading.textContent = sectionGroup.name;
+                
+                const stationsList = document.createElement('div');
+                stationsList.className = 'stations-list';
+                stationsList.id = sectionGroup.listId;
+                
+                sectionDiv.appendChild(heading);
+                sectionDiv.appendChild(stationsList);
+                
+                contentDiv.insertBefore(sectionDiv, notesSection.nextSibling);
+            }
+        }
+
+        function renderSectionGroups() {
+            const container = document.getElementById('sectionGroups');
+            container.innerHTML = '';
+            
+            sectionGroups.forEach(sectionGroup => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'section-group';
+                
+                const header = document.createElement('div');
+                header.className = 'section-group-header';
+                
+                const title = document.createElement('div');
+                title.className = 'section-group-title';
+                title.textContent = sectionGroup.name;
+                
+                const controls = document.createElement('div');
+                controls.className = 'section-group-controls';
+                
+                const renameBtn = document.createElement('button');
+                renameBtn.className = 'small-btn';
+                renameBtn.textContent = 'Rename';
+                renameBtn.onclick = () => renameSectionGroup(sectionGroup.id);
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'small-btn reset-button';
+                removeBtn.textContent = 'Remove Section';
+                removeBtn.onclick = () => removeSectionGroup(sectionGroup.id);
+                
+                controls.appendChild(renameBtn);
+                controls.appendChild(removeBtn);
+                
+                header.appendChild(title);
+                header.appendChild(controls);
+                
+                const stationsDiv = document.createElement('div');
+                stationsDiv.className = 'section-stations';
+                
+                const stationsList = document.getElementById(sectionGroup.listId);
+                if (stationsList) {
+                    const stations = stationsList.querySelectorAll('.station');
+                    stations.forEach(station => {
+                        const stationHeader = station.querySelector('.station-header');
+                        if (stationHeader) {
+                            const stationName = stationHeader.textContent.trim();
+                            
+                            const tag = document.createElement('div');
+                            tag.className = 'station-tag';
+                            
+                            const nameSpan = document.createElement('span');
+                            nameSpan.className = 'station-tag-name';
+                            nameSpan.textContent = stationName;
+                            nameSpan.onclick = () => renameStation(station);
+                            
+                            const removeSpan = document.createElement('span');
+                            removeSpan.className = 'station-tag-remove';
+                            removeSpan.textContent = '×';
+                            removeSpan.onclick = () => removeStationFromSection(station);
+                            
+                            tag.appendChild(nameSpan);
+                            tag.appendChild(removeSpan);
+                            stationsDiv.appendChild(tag);
+                        }
+                    });
+                }
+                
+                groupDiv.appendChild(header);
+                groupDiv.appendChild(stationsDiv);
+                container.appendChild(groupDiv);
+            });
+            
+            saveState();
+        }
+
+        function addSectionGroup() {
+            const nameInput = document.getElementById('newSectionName');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('Please enter a section name');
+                return;
+            }
+            
+            const listId = `stationsList${sectionGroupCounter}`;
+            sectionGroups.push({
+                id: sectionGroupCounter++,
+                name: name,
+                listId: listId
+            });
+            
+            nameInput.value = '';
+            rebuildSections();
+            renderSectionGroups();
+            saveState();
+        }
+
+        function renameSectionGroup(sectionId) {
+            const sectionGroup = sectionGroups.find(sg => sg.id === sectionId);
+            if (!sectionGroup) return;
+            
+            const newName = prompt('Enter new section name:', sectionGroup.name);
+            if (newName && newName.trim()) {
+                sectionGroup.name = newName.trim();
+                rebuildSections();
+                
+                const stationsList = document.getElementById(sectionGroup.listId);
+                if (stationsList) {
+                    const stations = Array.from(document.querySelectorAll('.station'));
+                    stations.forEach(station => {
+                        if (station.parentElement && station.parentElement.id === sectionGroup.listId) {
+                            stationsList.appendChild(station);
+                        }
+                    });
+                }
+                
+                renderSectionGroups();
+                drawAllPlanArrows();
+                saveState();
+            }
+        }
+
+        function removeSectionGroup(sectionId) {
+            const sectionGroup = sectionGroups.find(sg => sg.id === sectionId);
+            if (!sectionGroup) return;
+            
+            const stationsList = document.getElementById(sectionGroup.listId);
+            const stationCount = stationsList ? stationsList.querySelectorAll('.station').length : 0;
+            
+            if (stationCount > 0) {
+                if (!confirm(`This section contains ${stationCount} station(s). All stations and their units will be removed. Continue?`)) {
+                    return;
+                }
+            }
+            
+            if (stationsList) {
+                const stations = stationsList.querySelectorAll('.station');
+                stations.forEach(station => {
+                    const units = station.querySelectorAll('.unit');
+                    units.forEach(unit => {
+                        const unitId = unit.dataset.unitId;
+                        const groupId = unit.dataset.groupId;
+                        const groupPool = document.getElementById(`group-${groupId}-pool`);
+                        if (groupPool) {
+                            groupPool.appendChild(unit);
+                        }
+                    });
+                });
+            }
+            
+            const index = sectionGroups.findIndex(sg => sg.id === sectionId);
+            if (index > -1) {
+                sectionGroups.splice(index, 1);
+            }
+            
+            rebuildSections();
+            renderSectionGroups();
+            drawAllPlanArrows();
+            saveState();
+        }
+
+        function renameStation(stationElement) {
+            const header = stationElement.querySelector('.station-header');
+            if (!header) return;
+            
+            const currentName = header.textContent.trim();
+            const newName = prompt('Enter new station name:', currentName);
+            
+            if (newName && newName.trim() && newName.trim() !== currentName) {
+                header.textContent = newName.trim();
+                renderSectionGroups();
+                populatePlanForTodayDropdown();
+                drawAllPlanArrows();
+                saveState();
+            }
+        }
+
+        function removeStationFromSection(stationElement) {
+            const header = stationElement.querySelector('.station-header');
+            const stationName = header ? header.textContent.trim() : 'this station';
+            
+            const units = stationElement.querySelectorAll('.unit');
+            if (units.length > 0) {
+                if (!confirm(`Station "${stationName}" contains ${units.length} unit(s). Units will be returned to their groups. Continue?`)) {
+                    return;
+                }
+                
+                units.forEach(unit => {
+                    const unitId = unit.dataset.unitId;
+                    const groupId = unit.dataset.groupId;
+                    const groupPool = document.getElementById(`group-${groupId}-pool`);
+                    if (groupPool) {
+                        groupPool.appendChild(unit);
+                    }
+                });
+            }
+            
+            stationElement.remove();
+            renderSectionGroups();
+            populatePlanForTodayDropdown();
+            drawAllPlanArrows();
+            saveState();
+        }
+
+        function editMainTitle() {
+            const newTitle = prompt('Enter new main title:', mainTitle);
+            
+            if (newTitle && newTitle.trim() && newTitle.trim() !== mainTitle) {
+                mainTitle = newTitle.trim();
+                
+                const titleElement = document.querySelector('.title');
+                const titleDisplay = document.getElementById('currentTitleDisplay');
+                
+                if (titleElement) titleElement.textContent = mainTitle;
+                if (titleDisplay) titleDisplay.textContent = mainTitle;
+                
+                saveState();
+            }
+        }
+
+        function toggleStationManagement() {
+            const content = document.getElementById('stationManagementContent');
+            content.classList.toggle('visible');
         }
 
         window.addEventListener('resize', drawAllPlanArrows);
