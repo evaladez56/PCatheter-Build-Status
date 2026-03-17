@@ -2146,6 +2146,7 @@
             const availableUnitsSection = document.querySelector('.units-section');
             const controls = document.querySelector('.controls');
             const notesInputSection = document.querySelector('.notes-section');
+            const stationManagement = document.querySelector('.station-management');
             const screenshotButton = document.querySelector('.screenshot-button');
             const svg = document.getElementById('arrowContainer');
             
@@ -2160,6 +2161,7 @@
             availableUnitsSection.style.display = 'none';
             controls.style.display = 'none';
             if (notesInputSection) notesInputSection.style.display = 'none';
+            if (stationManagement) stationManagement.style.display = 'none';
             screenshotButton.style.display = 'none';
             
             await new Promise(resolve => setTimeout(resolve, 50));
@@ -2210,6 +2212,7 @@
                 availableUnitsSection.style.display = '';
                 controls.style.display = '';
                 if (notesInputSection) notesInputSection.style.display = '';
+                if (stationManagement) stationManagement.style.display = '';
                 screenshotButton.style.display = '';
                 svg.style.display = '';
                 document.body.style.overflow = originalOverflow;
