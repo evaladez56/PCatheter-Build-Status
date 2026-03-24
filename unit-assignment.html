@@ -2395,6 +2395,7 @@
             const availableUnitsSection = document.querySelector('.units-section');
             const controls = document.querySelector('.controls');
             const notesInputSection = document.querySelector('.notes-section');
+            const productSection = document.querySelector('.product-section');
             const stationManagement = document.querySelector('.station-management');
             const screenshotButton = document.querySelector('.screenshot-button');
             const svg = document.getElementById('arrowContainer');
@@ -2410,6 +2411,7 @@
             availableUnitsSection.style.display = 'none';
             controls.style.display = 'none';
             if (notesInputSection) notesInputSection.style.display = 'none';
+            if (productSection) productSection.style.display = 'none';
             if (stationManagement) stationManagement.style.display = 'none';
             screenshotButton.style.display = 'none';
             
@@ -2461,6 +2463,7 @@
                 availableUnitsSection.style.display = '';
                 controls.style.display = '';
                 if (notesInputSection) notesInputSection.style.display = '';
+                if (productSection) productSection.style.display = '';
                 if (stationManagement) stationManagement.style.display = '';
                 screenshotButton.style.display = '';
                 svg.style.display = '';
