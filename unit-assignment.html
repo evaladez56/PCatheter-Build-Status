@@ -630,6 +630,58 @@
             align-items: center;
         }
 
+        .product-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .product-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .product-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .product-btn {
+            padding: 15px 20px;
+            font-size: 1em;
+            font-weight: 600;
+            border: 2px solid #dee2e6;
+            background: white;
+            color: #495057;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .product-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .product-btn.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+
         .station-management {
             margin-top: 40px;
             padding: 20px;
@@ -884,6 +936,16 @@
             <textarea id="globalNotes" placeholder="Enter notes here..."></textarea>
         </div>
 
+        <div class="product-section">
+            <h3>Product</h3>
+            <div class="product-buttons">
+                <button class="product-btn active" onclick="switchProduct('peregrine-catheter')">Peregrine Catheter</button>
+                <button class="product-btn" onclick="switchProduct('peregrine-vp')">Peregrine VP</button>
+                <button class="product-btn" onclick="switchProduct('turbo-vp')">Turbo VP</button>
+                <button class="product-btn" onclick="switchProduct('broadway')">Broadway</button>
+            </div>
+        </div>
+
         <div class="station-management">
             <button class="toggle-management-btn" onclick="toggleStationManagement()">⚙️ Manage Station Sections</button>
             <div class="station-management-content" id="stationManagementContent">
@@ -975,6 +1037,7 @@
         ];
         let sectionGroupCounter = 3;
         let mainTitle = 'Peregrine Catheter Build Status';
+        let currentProduct = 'peregrine-catheter';
 
         function saveState() {
             const unitPositions = {};
@@ -999,6 +1062,7 @@
                 sectionGroups,
                 sectionGroupCounter,
                 mainTitle,
+                currentProduct,
                 notes: document.getElementById('globalNotes')?.value || ''
             };
             localStorage.setItem('unitAssignmentState', JSON.stringify(state));
@@ -1014,6 +1078,7 @@
                     groupCounter = state.groupCounter || 1;
                     sectionGroupCounter = state.sectionGroupCounter || 3;
                     mainTitle = state.mainTitle || 'Peregrine Catheter Build Status';
+                    currentProduct = state.currentProduct || 'peregrine-catheter';
                     
                     if (state.unitGroups && state.unitGroups.length > 0) {
                         unitGroups.length = 0;
@@ -1030,10 +1095,26 @@
                         sectionGroups.push(...state.sectionGroups);
                     }
                     
+                    const product = productStations[currentProduct] || productStations['peregrine-catheter'];
+                    const productTitle = getProductTitle();
+                    mainTitle = productTitle;
+                    
+                    if (sectionGroups.length >= 2) {
+                        sectionGroups[0].name = product.sectionNames.shaft;
+                        sectionGroups[1].name = product.sectionNames.backend;
+                    }
+                    
                     const titleElement = document.querySelector('.title');
                     const titleDisplay = document.getElementById('currentTitleDisplay');
                     if (titleElement) titleElement.textContent = mainTitle;
                     if (titleDisplay) titleDisplay.textContent = mainTitle;
+                    
+                    document.querySelectorAll('.product-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.onclick.toString().includes(currentProduct)) {
+                            btn.classList.add('active');
+                        }
+                    });
                     
                     if (state.notes) {
                         const notesTextarea = document.getElementById('globalNotes');
@@ -1087,40 +1168,147 @@
             }
         });
 
-        const stationNames = [
-            'AJ Stack',
-            'Stuffing',
-            'CR / AJ Shaft Insert',
-            'Proximal Cap Glue',
-            'Resistance Weld',
-            'Distal Flare',
-            'Bar Capture',
-            'Tip Ring Weld',
-            'Shaft Collar Glue',
-            'PW Crimp',
-            'Anchor Plate Weld',
-            'Shaft Integration & Inputs',
-            'Tensioning',
-            'Fiber Integration',
-            'AJJ Insertion',
-            'AJJ Weld',
-            'IPT 1.0',
-            'IPT 2.0',
-            'US Weld Cover',
-            'Proximal WC  Trim',
-            'TC Weld',
-            'Verification',
-            'Authentication'
-        ];
+        const productStations = {
+            'peregrine-catheter': {
+                title: 'Peregrine Catheter Build Status',
+                sectionNames: { shaft: 'Shaft', backend: 'Backend' },
+                shaft: [
+                    'AJ Stack',
+                    'Stuffing',
+                    'CR / AJ Shaft Insert',
+                    'Proximal Cap Glue',
+                    'Resistance Weld',
+                    'Distal Flare',
+                    'Bar Capture',
+                    'Tip Ring Weld',
+                    'Shaft Collar Glue',
+                    'PW Crimp',
+                    'Anchor Plate Weld'
+                ],
+                backend: [
+                    'Shaft Integration & Inputs',
+                    'Tensioning',
+                    'Fiber Integration',
+                    'AJJ Insertion',
+                    'AJJ Weld',
+                    'IPT 1.0',
+                    'IPT 2.0',
+                    'US Weld Cover',
+                    'Proximal WC  Trim',
+                    'TC Weld',
+                    'Verification',
+                    'Authentication'
+                ]
+            },
+            'peregrine-vp': {
+                title: 'Peregrine VP Build Status',
+                sectionNames: { shaft: 'Shaft', backend: 'Backend' },
+                shaft: [
+                    'Tip-Torque Coil Welding',
+                    'Coil Compression',
+                    'Braiding',
+                    'Braid Termination',
+                    'Jacket Lamination',
+                    'Swaging'
+                ],
+                backend: [
+                    'Tip Laser Welding',
+                    'Cable Adapter Assembly Integration',
+                    'Cable Adapter Laser Weld',
+                    'Fiber-Ferrule Assembly',
+                    'Fiber Alignment',
+                    'Camera Connection',
+                    'Image Orientation & Backend Sealing',
+                    'Integrity Test',
+                    'Image Artifacts Test',
+                    'PIT (Power Image Tester)',
+                    'Laser Marking',
+                    'Authentication',
+                    'Labeling and Packaging'
+                ]
+            },
+            'turbo-vp': {
+                title: 'Turbo VP Build Status',
+                sectionNames: { shaft: 'Shaft', backend: 'Backend' },
+                shaft: [
+                    '100 Shaft Liner Formation',
+                    '150 Shaft Final Lamination',
+                    '200 Shaft Tipping',
+                    '250 Shaft Measurement and Cable Adapter Install',
+                    '300 Final Confirmation'
+                ],
+                backend: [
+                    '280 Fiber Prep',
+                    '290 Ferrule Polishing',
+                    '300 Fiber Assembly',
+                    '350 Camera and Fiber Integration',
+                    '400 Tip Potting',
+                    '425 Final Assembly',
+                    '450 Hipot and Leak Test',
+                    '475 Key Bonding',
+                    '500 Image and Power Test',
+                    '550 Probe Presence',
+                    '600 Authentication',
+                    '800 Laser Marking',
+                    '1000 Labeling and Packaging'
+                ]
+            },
+            'broadway': {
+                title: 'Broadway Build Status',
+                sectionNames: { shaft: '1', backend: '2' },
+                shaft: [
+                    'Pre-Assembly',
+                    'Soldering Ring-To-Shaft',
+                    'Shaft Assembly',
+                    'Coil Pipe Termination',
+                    'Shaft Integration',
+                    'Pre-Tensioning',
+                    'Fiber Integration',
+                    'Initial IPT',
+                    'WC Sleeve Install',
+                    'Tip Cavity Lengthening'
+                ],
+                backend: [
+                    'Tip Potting',
+                    'Final Assembly',
+                    'Final IPT',
+                    'Bubble Leak test',
+                    'Needle Path Testing',
+                    'Phantom Image Testing',
+                    'High Pot Testing',
+                    'Camera and Light Inspection',
+                    'Electrical Capacitance Transducer Test',
+                    'Working Channel and Final Inspection',
+                    'Labeling',
+                    'Packaging',
+                    'Final Confirmation'
+                ]
+            }
+        };
+
+        function getStationNames() {
+            const product = productStations[currentProduct] || productStations['peregrine-catheter'];
+            return [...product.shaft, ...product.backend];
+        }
+
+        function getProductTitle() {
+            const product = productStations[currentProduct] || productStations['peregrine-catheter'];
+            return product.title;
+        }
 
         function initializeApp() {
             const hasLoadedState = loadState();
             
             rebuildSections();
             
-            stationNames.forEach((name, index) => {
-                const listId = index < 11 ? 'stationsList1' : 'stationsList2';
-                createStation(name, listId);
+            const product = productStations[currentProduct] || productStations['peregrine-catheter'];
+            
+            product.shaft.forEach(name => {
+                createStation(name, 'stationsList1');
+            });
+            
+            product.backend.forEach(name => {
+                createStation(name, 'stationsList2');
             });
             
             populatePlanForTodayDropdown();
@@ -1138,6 +1326,8 @@
 
         function populatePlanForTodayDropdown() {
             const dropdown = document.getElementById('unitPlanForToday');
+            dropdown.innerHTML = '<option value="">-- Select Station --</option>';
+            const stationNames = getStationNames();
             stationNames.forEach(stationName => {
                 const option = document.createElement('option');
                 option.value = stationName;
@@ -2097,6 +2287,65 @@
             stationElement.remove();
             renderSectionGroups();
             populatePlanForTodayDropdown();
+            drawAllPlanArrows();
+            saveState();
+        }
+
+        function switchProduct(productId) {
+            if (currentProduct === productId) return;
+            
+            const confirmSwitch = confirm(`Switch to ${productId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}?\n\nThis will clear all current stations and load the new product's stations. Units will be returned to their groups.`);
+            
+            if (!confirmSwitch) return;
+            
+            currentProduct = productId;
+            
+            document.querySelectorAll('.product-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            sectionGroups.forEach(sectionGroup => {
+                const stationsList = document.getElementById(sectionGroup.listId);
+                if (stationsList) {
+                    const stations = stationsList.querySelectorAll('.station');
+                    stations.forEach(station => {
+                        const units = station.querySelectorAll('.unit');
+                        units.forEach(unit => {
+                            const groupId = unit.dataset.groupId;
+                            const groupPool = document.getElementById(`group-${groupId}-pool`);
+                            if (groupPool) {
+                                groupPool.appendChild(unit);
+                            }
+                        });
+                        station.remove();
+                    });
+                }
+            });
+            
+            const product = productStations[currentProduct] || productStations['peregrine-catheter'];
+            
+            sectionGroups[0].name = product.sectionNames.shaft;
+            sectionGroups[1].name = product.sectionNames.backend;
+            
+            rebuildSections();
+            
+            product.shaft.forEach(name => {
+                createStation(name, 'stationsList1');
+            });
+            
+            product.backend.forEach(name => {
+                createStation(name, 'stationsList2');
+            });
+            
+            mainTitle = product.title;
+            const titleElement = document.querySelector('.title');
+            const titleDisplay = document.getElementById('currentTitleDisplay');
+            if (titleElement) titleElement.textContent = mainTitle;
+            if (titleDisplay) titleDisplay.textContent = mainTitle;
+            
+            populatePlanForTodayDropdown();
+            renderSectionGroups();
             drawAllPlanArrows();
             saveState();
         }
