@@ -1052,7 +1052,7 @@
                 }
             });
             
-            const state = {
+            const productState = {
                 unitCounter,
                 stationCounter,
                 groupCounter,
@@ -1061,24 +1061,34 @@
                 unitPositions,
                 sectionGroups,
                 sectionGroupCounter,
-                mainTitle,
-                currentProduct,
                 notes: document.getElementById('globalNotes')?.value || ''
             };
-            localStorage.setItem('unitAssignmentState', JSON.stringify(state));
+            
+            const allStates = JSON.parse(localStorage.getItem('unitAssignmentStates') || '{}');
+            allStates[currentProduct] = productState;
+            allStates._currentProduct = currentProduct;
+            allStates._mainTitle = mainTitle;
+            
+            localStorage.setItem('unitAssignmentStates', JSON.stringify(allStates));
         }
 
         function loadState() {
-            const saved = localStorage.getItem('unitAssignmentState');
+            const saved = localStorage.getItem('unitAssignmentStates');
             if (saved) {
                 try {
-                    const state = JSON.parse(saved);
+                    const allStates = JSON.parse(saved);
+                    currentProduct = allStates._currentProduct || 'peregrine-catheter';
+                    mainTitle = allStates._mainTitle || 'Peregrine Catheter Build Status';
+                    
+                    const state = allStates[currentProduct];
+                    if (!state) {
+                        return false;
+                    }
+                    
                     unitCounter = state.unitCounter || 1;
                     stationCounter = state.stationCounter || 1;
                     groupCounter = state.groupCounter || 1;
                     sectionGroupCounter = state.sectionGroupCounter || 3;
-                    mainTitle = state.mainTitle || 'Peregrine Catheter Build Status';
-                    currentProduct = state.currentProduct || 'peregrine-catheter';
                     
                     if (state.unitGroups && state.unitGroups.length > 0) {
                         unitGroups.length = 0;
@@ -2294,10 +2304,9 @@
         function switchProduct(productId) {
             if (currentProduct === productId) return;
             
-            const confirmSwitch = confirm(`Switch to ${productId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}?\n\nThis will clear all current stations and load the new product's stations. Units will be returned to their groups.`);
+            saveState();
             
-            if (!confirmSwitch) return;
-            
+            const previousProduct = currentProduct;
             currentProduct = productId;
             
             document.querySelectorAll('.product-btn').forEach(btn => {
@@ -2305,19 +2314,22 @@
             });
             event.target.classList.add('active');
             
+            const allStates = JSON.parse(localStorage.getItem('unitAssignmentStates') || '{}');
+            const savedProductState = allStates[currentProduct];
+            
+            document.querySelectorAll('.unit').forEach(unit => {
+                unit.remove();
+            });
+            
+            document.querySelectorAll('.unit-group').forEach(group => {
+                group.remove();
+            });
+            
             sectionGroups.forEach(sectionGroup => {
                 const stationsList = document.getElementById(sectionGroup.listId);
                 if (stationsList) {
                     const stations = stationsList.querySelectorAll('.station');
                     stations.forEach(station => {
-                        const units = station.querySelectorAll('.unit');
-                        units.forEach(unit => {
-                            const groupId = unit.dataset.groupId;
-                            const groupPool = document.getElementById(`group-${groupId}-pool`);
-                            if (groupPool) {
-                                groupPool.appendChild(unit);
-                            }
-                        });
                         station.remove();
                     });
                 }
@@ -2329,6 +2341,44 @@
             sectionGroups[1].name = product.sectionNames.backend;
             
             rebuildSections();
+            
+            if (savedProductState) {
+                unitCounter = savedProductState.unitCounter || 1;
+                stationCounter = savedProductState.stationCounter || 1;
+                groupCounter = savedProductState.groupCounter || 1;
+                sectionGroupCounter = savedProductState.sectionGroupCounter || 3;
+                
+                unitGroups.length = 0;
+                if (savedProductState.unitGroups) {
+                    unitGroups.push(...savedProductState.unitGroups);
+                }
+                
+                Object.keys(unitData).forEach(key => delete unitData[key]);
+                if (savedProductState.unitData) {
+                    Object.assign(unitData, savedProductState.unitData);
+                }
+                
+                if (savedProductState.sectionGroups) {
+                    sectionGroups.length = 0;
+                    sectionGroups.push(...savedProductState.sectionGroups);
+                    sectionGroups[0].name = product.sectionNames.shaft;
+                    sectionGroups[1].name = product.sectionNames.backend;
+                    rebuildSections();
+                }
+            } else {
+                unitCounter = 1;
+                stationCounter = 1;
+                groupCounter = 1;
+                sectionGroupCounter = 3;
+                unitGroups.length = 0;
+                Object.keys(unitData).forEach(key => delete unitData[key]);
+                sectionGroups.length = 0;
+                sectionGroups.push(
+                    { id: 1, name: product.sectionNames.shaft, listId: 'stationsList1' },
+                    { id: 2, name: product.sectionNames.backend, listId: 'stationsList2' }
+                );
+                rebuildSections();
+            }
             
             product.shaft.forEach(name => {
                 createStation(name, 'stationsList1');
@@ -2344,9 +2394,53 @@
             if (titleElement) titleElement.textContent = mainTitle;
             if (titleDisplay) titleDisplay.textContent = mainTitle;
             
+            const notesTextarea = document.getElementById('globalNotes');
+            const notesDisplay = document.getElementById('notesDisplay');
+            if (savedProductState && savedProductState.notes) {
+                if (notesTextarea) notesTextarea.value = savedProductState.notes;
+                if (notesDisplay) notesDisplay.textContent = savedProductState.notes || 'These are the notes';
+            } else {
+                if (notesTextarea) notesTextarea.value = '';
+                if (notesDisplay) notesDisplay.textContent = 'These are the notes';
+            }
+            
             populatePlanForTodayDropdown();
+            
+            if (savedProductState) {
+                renderUnitGroups();
+                
+                if (savedProductState.unitPositions) {
+                    setTimeout(() => {
+                        Object.keys(savedProductState.unitPositions).forEach(unitId => {
+                            const stationName = savedProductState.unitPositions[unitId];
+                            const unit = document.getElementById(`unit-${unitId}`);
+                            if (unit) {
+                                const stations = document.querySelectorAll('.station');
+                                stations.forEach(station => {
+                                    const header = station.querySelector('.station-header');
+                                    if (header && header.textContent.trim() === stationName) {
+                                        const stationContent = station.querySelector('.station-content');
+                                        if (stationContent) {
+                                            stationContent.appendChild(unit);
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                        updateLegend();
+                        drawAllPlanArrows();
+                    }, 100);
+                } else {
+                    updateLegend();
+                    drawAllPlanArrows();
+                }
+            } else {
+                createUnitGroup('Group 1', '#667eea');
+                addUnitToGroup(0, 5);
+                updateLegend();
+            }
+            
             renderSectionGroups();
-            drawAllPlanArrows();
             saveState();
         }
 
