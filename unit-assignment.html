@@ -245,6 +245,10 @@
             z-index: 10;
         }
         
+        .container {
+            position: relative;
+        }
+        
         .unit * {
             pointer-events: none;
             -webkit-user-select: none;
@@ -295,6 +299,34 @@
 
         .unit.complete {
             color: #00ff00 !important;
+        }
+        
+        .unit.selected {
+            box-shadow: 0 0 0 3px #ffc107, 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: scale(1.05);
+            z-index: 20;
+        }
+        
+        .selection-box {
+            position: absolute;
+            border: 2px dashed #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .multi-drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            max-width: 200px;
+        }
+        
+        .multi-drag-ghost .unit {
+            opacity: 0.8;
         }
 
         .unit:hover {
@@ -1133,28 +1165,39 @@
                         if (notesDisplay) notesDisplay.textContent = state.notes || 'These are the notes';
                     }
                     
-                    if (state.unitPositions) {
-                        setTimeout(() => {
-                            Object.keys(state.unitPositions).forEach(unitId => {
-                                const stationName = state.unitPositions[unitId];
-                                const unitElement = document.getElementById(`unit-${unitId}`);
-                                
-                                if (unitElement) {
-                                    const stations = document.querySelectorAll('.station');
-                                    stations.forEach(station => {
-                                        const header = station.querySelector('.station-header');
-                                        if (header && header.textContent.trim() === stationName) {
-                                            const unitsContainer = station.querySelector('.station-units');
-                                            if (unitsContainer) {
-                                                unitsContainer.appendChild(unitElement);
+                    setTimeout(() => {
+                        unitGroups.forEach((group) => {
+                            group.units.forEach(unitId => {
+                                const unit = document.getElementById(`unit-${unitId}`);
+                                if (unit) {
+                                    let placed = false;
+                                    
+                                    if (state.unitPositions && state.unitPositions[unitId]) {
+                                        const stationName = state.unitPositions[unitId];
+                                        const stations = document.querySelectorAll('.station');
+                                        stations.forEach(station => {
+                                            const header = station.querySelector('.station-header');
+                                            if (header && header.textContent.trim() === stationName) {
+                                                const stationContent = station.querySelector('.station-content');
+                                                if (stationContent) {
+                                                    stationContent.appendChild(unit);
+                                                    placed = true;
+                                                }
                                             }
+                                        });
+                                    }
+                                    
+                                    if (!placed) {
+                                        const groupPool = document.getElementById(`group-${group.id}-pool`);
+                                        if (groupPool) {
+                                            groupPool.appendChild(unit);
                                         }
-                                    });
+                                    }
                                 }
                             });
-                            drawAllPlanArrows();
-                        }, 100);
-                    }
+                        });
+                        drawAllPlanArrows();
+                    }, 100);
                     
                     return true;
                 } catch (e) {
@@ -1328,9 +1371,45 @@
                 createUnitGroup('Group 1', '#667eea');
                 addUnitToGroup(0, 5);
             } else {
-                renderUnitGroups();
-                updateLegend();
-                drawAllPlanArrows();
+                renderUnitGroups(false);
+                
+                const allStates = JSON.parse(localStorage.getItem('unitAssignmentStates') || '{}');
+                const savedProductState = allStates[currentProduct];
+                
+                setTimeout(() => {
+                    unitGroups.forEach((group) => {
+                        group.units.forEach(unitId => {
+                            const unit = document.getElementById(`unit-${unitId}`);
+                            if (unit) {
+                                let placed = false;
+                                
+                                if (savedProductState && savedProductState.unitPositions && savedProductState.unitPositions[unitId]) {
+                                    const stationName = savedProductState.unitPositions[unitId];
+                                    const stations = document.querySelectorAll('.station');
+                                    stations.forEach(station => {
+                                        const header = station.querySelector('.station-header');
+                                        if (header && header.textContent.trim() === stationName) {
+                                            const stationContent = station.querySelector('.station-content');
+                                            if (stationContent) {
+                                                stationContent.appendChild(unit);
+                                                placed = true;
+                                            }
+                                        }
+                                    });
+                                }
+                                
+                                if (!placed) {
+                                    const groupPool = document.getElementById(`group-${group.id}-pool`);
+                                    if (groupPool) {
+                                        groupPool.appendChild(unit);
+                                    }
+                                }
+                            }
+                        });
+                    });
+                    updateLegend();
+                    drawAllPlanArrows();
+                }, 100);
             }
         }
 
@@ -1363,7 +1442,7 @@
                 unitCounter: 1
             };
             unitGroups.push(group);
-            renderUnitGroups();
+            renderUnitGroups(true);
             return group;
         }
 
@@ -1387,7 +1466,7 @@
                     }
                 });
                 
-                renderUnitGroups();
+                renderUnitGroups(true);
             }
         }
 
@@ -1400,7 +1479,7 @@
                 const unitId = `${group.id}-${unitNumber}`;
                 group.units.push(unitId);
             }
-            renderUnitGroups();
+            renderUnitGroups(true);
         }
 
         function removeUnitGroup(groupIndex) {
@@ -1415,7 +1494,7 @@
             });
             
             unitGroups.splice(groupIndex, 1);
-            renderUnitGroups();
+            renderUnitGroups(true);
             updateLegend();
         }
 
@@ -1478,7 +1557,7 @@
             }
         }
 
-        function renderUnitGroups() {
+        function renderUnitGroups(skipPositionRestore = false) {
             const container = document.getElementById('unitGroups');
             container.innerHTML = '';
             
@@ -1609,9 +1688,31 @@
                 unitsPool.addEventListener('dragover', handleDragOver);
                 unitsPool.addEventListener('drop', function(e) {
                     e.preventDefault();
-                    if (draggedElement) {
+                    
+                    if (selectedUnits.size > 0 && e.dataTransfer.getData('text/plain') === 'multi') {
+                        selectedUnits.forEach(unitId => {
+                            const unit = document.getElementById(`unit-${unitId}`);
+                            if (unit) {
+                                unit.classList.remove('dragging');
+                                unitsPool.appendChild(unit);
+                            }
+                        });
+                        clearSelection();
+                    } else if (draggedElement) {
                         unitsPool.appendChild(draggedElement);
                     }
+                    
+                    if (multiDragGhost) {
+                        multiDragGhost.remove();
+                        multiDragGhost = null;
+                    }
+                    
+                    document.removeEventListener('dragover', updateMultiDragGhost);
+                    
+                    setTimeout(() => {
+                        drawAllPlanArrows();
+                        saveState();
+                    }, 50);
                 });
                 
                 const groupDiv = document.createElement('div');
@@ -1700,15 +1801,91 @@
         }
 
         let draggedElement = null;
+        let selectedUnits = new Set();
+        let isSelecting = false;
+        let selectionBox = null;
+        let selectionStart = { x: 0, y: 0 };
+        let multiDragGhost = null;
 
         function handleDragStart(e) {
-            draggedElement = e.target;
-            e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
+            if (selectedUnits.size > 0 && selectedUnits.has(e.target.dataset.unitId)) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', 'multi');
+                
+                createMultiDragGhost(e);
+                
+                selectedUnits.forEach(unitId => {
+                    const unit = document.getElementById(`unit-${unitId}`);
+                    if (unit) unit.classList.add('dragging');
+                });
+            } else {
+                draggedElement = e.target;
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            }
         }
 
         function handleDragEnd(e) {
-            e.target.classList.remove('dragging');
+            if (selectedUnits.size > 0 && selectedUnits.has(e.target.dataset.unitId)) {
+                selectedUnits.forEach(unitId => {
+                    const unit = document.getElementById(`unit-${unitId}`);
+                    if (unit) unit.classList.remove('dragging');
+                });
+            } else {
+                e.target.classList.remove('dragging');
+            }
+            
+            if (multiDragGhost) {
+                multiDragGhost.remove();
+                multiDragGhost = null;
+            }
+            
+            document.removeEventListener('dragover', updateMultiDragGhost);
+        }
+        
+        function createMultiDragGhost(e) {
+            multiDragGhost = document.createElement('div');
+            multiDragGhost.className = 'multi-drag-ghost';
+            multiDragGhost.style.left = e.clientX + 'px';
+            multiDragGhost.style.top = e.clientY + 'px';
+            
+            const badge = document.createElement('div');
+            badge.style.cssText = 'background: #ffc107; color: #000; padding: 4px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; margin-bottom: 5px;';
+            badge.textContent = `${selectedUnits.size} units`;
+            multiDragGhost.appendChild(badge);
+            
+            let count = 0;
+            selectedUnits.forEach(unitId => {
+                if (count < 6) {
+                    const unit = document.getElementById(`unit-${unitId}`);
+                    if (unit) {
+                        const clone = unit.cloneNode(true);
+                        clone.style.width = '30px';
+                        clone.style.height = '30px';
+                        clone.style.fontSize = '10px';
+                        multiDragGhost.appendChild(clone);
+                    }
+                    count++;
+                }
+            });
+            
+            if (selectedUnits.size > 6) {
+                const more = document.createElement('div');
+                more.style.cssText = 'width: 30px; height: 30px; background: #6c757d; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold;';
+                more.textContent = `+${selectedUnits.size - 6}`;
+                multiDragGhost.appendChild(more);
+            }
+            
+            document.body.appendChild(multiDragGhost);
+            
+            document.addEventListener('dragover', updateMultiDragGhost);
+        }
+        
+        function updateMultiDragGhost(e) {
+            if (multiDragGhost) {
+                multiDragGhost.style.left = (e.clientX + 10) + 'px';
+                multiDragGhost.style.top = (e.clientY + 10) + 'px';
+            }
         }
 
         function handleDragOver(e) {
@@ -1735,15 +1912,33 @@
             if (station) {
                 station.classList.remove('drag-over');
                 
-                const unitsContainer = station.querySelector('.station-units');
-                if (draggedElement) {
+                const unitsContainer = station.querySelector('.station-content') || station.querySelector('.station-units');
+                
+                if (selectedUnits.size > 0 && e.dataTransfer.getData('text/plain') === 'multi') {
+                    selectedUnits.forEach(unitId => {
+                        const unit = document.getElementById(`unit-${unitId}`);
+                        if (unit && unitsContainer) {
+                            unit.classList.remove('dragging');
+                            unitsContainer.appendChild(unit);
+                        }
+                    });
+                    clearSelection();
+                } else if (draggedElement && unitsContainer) {
                     unitsContainer.appendChild(draggedElement);
-                    setTimeout(() => {
-                        drawAllPlanArrows();
-                        saveState();
-                    }, 50);
                 }
+                
+                setTimeout(() => {
+                    drawAllPlanArrows();
+                    saveState();
+                }, 50);
             }
+            
+            if (multiDragGhost) {
+                multiDragGhost.remove();
+                multiDragGhost = null;
+            }
+            
+            document.removeEventListener('dragover', updateMultiDragGhost);
         }
 
         function resetAssignments() {
@@ -1784,6 +1979,125 @@
         let currentEditingUnit = null;
         let currentEditingGroup = null;
         let isGroupEdit = false;
+        
+        function initializeSelectionBox() {
+            const container = document.querySelector('.container');
+            
+            container.addEventListener('mousedown', function(e) {
+                if (e.target.classList.contains('unit') || e.target.closest('.unit')) {
+                    return;
+                }
+                
+                if (e.target.closest('.station') || e.target.closest('.units-pool') || e.target.closest('.unit-group') || e.target.closest('.units-section')) {
+                    isSelecting = true;
+                    const rect = container.getBoundingClientRect();
+                    selectionStart.x = e.clientX - rect.left + container.scrollLeft;
+                    selectionStart.y = e.clientY - rect.top + container.scrollTop;
+                    
+                    if (!selectionBox) {
+                        selectionBox = document.createElement('div');
+                        selectionBox.className = 'selection-box';
+                        container.appendChild(selectionBox);
+                    }
+                    
+                    selectionBox.style.left = selectionStart.x + 'px';
+                    selectionBox.style.top = selectionStart.y + 'px';
+                    selectionBox.style.width = '0px';
+                    selectionBox.style.height = '0px';
+                    selectionBox.style.display = 'block';
+                    
+                    if (!e.ctrlKey && !e.metaKey) {
+                        clearSelection();
+                    }
+                }
+            });
+            
+            container.addEventListener('mousemove', function(e) {
+                if (!isSelecting) return;
+                
+                const rect = container.getBoundingClientRect();
+                const currentX = e.clientX - rect.left + container.scrollLeft;
+                const currentY = e.clientY - rect.top + container.scrollTop;
+                
+                const left = Math.min(selectionStart.x, currentX);
+                const top = Math.min(selectionStart.y, currentY);
+                const width = Math.abs(currentX - selectionStart.x);
+                const height = Math.abs(currentY - selectionStart.y);
+                
+                selectionBox.style.left = left + 'px';
+                selectionBox.style.top = top + 'px';
+                selectionBox.style.width = width + 'px';
+                selectionBox.style.height = height + 'px';
+                
+                updateSelection(left, top, width, height);
+            });
+            
+            container.addEventListener('mouseup', function(e) {
+                if (isSelecting) {
+                    isSelecting = false;
+                    if (selectionBox) {
+                        selectionBox.style.display = 'none';
+                    }
+                }
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    clearSelection();
+                }
+            });
+        }
+        
+        function updateSelection(boxLeft, boxTop, boxWidth, boxHeight) {
+            const container = document.querySelector('.container');
+            const containerRect = container.getBoundingClientRect();
+            
+            document.querySelectorAll('.unit').forEach(unit => {
+                const rect = unit.getBoundingClientRect();
+                const unitLeft = rect.left - containerRect.left + container.scrollLeft;
+                const unitTop = rect.top - containerRect.top + container.scrollTop;
+                const unitRight = unitLeft + rect.width;
+                const unitBottom = unitTop + rect.height;
+                
+                const boxRight = boxLeft + boxWidth;
+                const boxBottom = boxTop + boxHeight;
+                
+                const isIntersecting = !(unitRight < boxLeft || 
+                                        unitLeft > boxRight || 
+                                        unitBottom < boxTop || 
+                                        unitTop > boxBottom);
+                
+                if (isIntersecting) {
+                    selectUnit(unit.dataset.unitId);
+                }
+            });
+        }
+        
+        function selectUnit(unitId) {
+            selectedUnits.add(unitId);
+            const unit = document.getElementById(`unit-${unitId}`);
+            if (unit) {
+                unit.classList.add('selected');
+            }
+        }
+        
+        function deselectUnit(unitId) {
+            selectedUnits.delete(unitId);
+            const unit = document.getElementById(`unit-${unitId}`);
+            if (unit) {
+                unit.classList.remove('selected');
+            }
+        }
+        
+        function clearSelection() {
+            selectedUnits.forEach(unitId => {
+                const unit = document.getElementById(`unit-${unitId}`);
+                if (unit) {
+                    unit.classList.remove('selected');
+                }
+            });
+            selectedUnits.clear();
+        }
 
         function openUnitModal(unitId) {
             currentEditingUnit = unitId;
@@ -2407,33 +2721,42 @@
             populatePlanForTodayDropdown();
             
             if (savedProductState) {
-                renderUnitGroups();
+                renderUnitGroups(false);
                 
-                if (savedProductState.unitPositions) {
-                    setTimeout(() => {
-                        Object.keys(savedProductState.unitPositions).forEach(unitId => {
-                            const stationName = savedProductState.unitPositions[unitId];
+                setTimeout(() => {
+                    unitGroups.forEach((group) => {
+                        group.units.forEach(unitId => {
                             const unit = document.getElementById(`unit-${unitId}`);
                             if (unit) {
-                                const stations = document.querySelectorAll('.station');
-                                stations.forEach(station => {
-                                    const header = station.querySelector('.station-header');
-                                    if (header && header.textContent.trim() === stationName) {
-                                        const stationContent = station.querySelector('.station-content');
-                                        if (stationContent) {
-                                            stationContent.appendChild(unit);
+                                let placed = false;
+                                
+                                if (savedProductState.unitPositions && savedProductState.unitPositions[unitId]) {
+                                    const stationName = savedProductState.unitPositions[unitId];
+                                    const stations = document.querySelectorAll('.station');
+                                    stations.forEach(station => {
+                                        const header = station.querySelector('.station-header');
+                                        if (header && header.textContent.trim() === stationName) {
+                                            const stationContent = station.querySelector('.station-content');
+                                            if (stationContent) {
+                                                stationContent.appendChild(unit);
+                                                placed = true;
+                                            }
                                         }
+                                    });
+                                }
+                                
+                                if (!placed) {
+                                    const groupPool = document.getElementById(`group-${group.id}-pool`);
+                                    if (groupPool) {
+                                        groupPool.appendChild(unit);
                                     }
-                                });
+                                }
                             }
                         });
-                        updateLegend();
-                        drawAllPlanArrows();
-                    }, 100);
-                } else {
+                    });
                     updateLegend();
                     drawAllPlanArrows();
-                }
+                }, 100);
             } else {
                 createUnitGroup('Group 1', '#667eea');
                 addUnitToGroup(0, 5);
@@ -2568,6 +2891,7 @@
         }
 
         initializeApp();
+        initializeSelectionBox();
     </script>
 </body>
 </html>
