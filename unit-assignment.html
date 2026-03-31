@@ -2368,6 +2368,25 @@
         }
 
         function resetAssignments() {
+            // Dissolve all stacks first, restoring units to normal draggable state
+            document.querySelectorAll('.unit-stack').forEach(stack => {
+                const units = Array.from(stack.querySelectorAll('.unit'));
+                const parent = stack.parentElement;
+                units.forEach(unit => {
+                    unit.style.position = '';
+                    unit.style.left = '';
+                    unit.style.top = '';
+                    unit.style.zIndex = '';
+                    unit.style.opacity = '';
+                    unit.draggable = true;
+                    if (parent) parent.appendChild(unit);
+                });
+                stack.remove();
+            });
+
+            currentClickedStack = null;
+            clearSelection();
+
             const allUnits = document.querySelectorAll('.unit');
             
             allUnits.forEach(unit => {
@@ -2436,6 +2455,7 @@
                     
                     if (!e.ctrlKey && !e.metaKey) {
                         clearSelection();
+                        currentClickedStack = null;
                     }
                 }
             });
@@ -2526,6 +2546,7 @@
                 }
             });
             selectedUnits.clear();
+            currentClickedStack = null;
             updateSelectionToolbar();
         }
         
@@ -3574,6 +3595,47 @@
         window.addEventListener('scroll', drawAllPlanArrows);
         window.addEventListener('resize', () => {
             document.querySelectorAll('.unit-stack').forEach(stack => positionStackUnits(stack));
+        });
+
+        // Cross-browser drag-scroll: scroll the page when dragging near top/bottom edges
+        let dragScrollFrame = null;
+        const DRAG_SCROLL_ZONE = 80;  // px from edge to start scrolling
+        const DRAG_SCROLL_SPEED = 12; // px per frame
+
+        document.addEventListener('dragover', function(e) {
+            const y = e.clientY;
+            const vh = window.innerHeight;
+
+            let speed = 0;
+            if (y < DRAG_SCROLL_ZONE) {
+                speed = -DRAG_SCROLL_SPEED * (1 - y / DRAG_SCROLL_ZONE);
+            } else if (y > vh - DRAG_SCROLL_ZONE) {
+                speed = DRAG_SCROLL_SPEED * (1 - (vh - y) / DRAG_SCROLL_ZONE);
+            }
+
+            if (dragScrollFrame) cancelAnimationFrame(dragScrollFrame);
+
+            if (speed !== 0) {
+                const scroll = () => {
+                    window.scrollBy(0, speed);
+                    dragScrollFrame = requestAnimationFrame(scroll);
+                };
+                dragScrollFrame = requestAnimationFrame(scroll);
+            }
+        });
+
+        document.addEventListener('dragend', function() {
+            if (dragScrollFrame) {
+                cancelAnimationFrame(dragScrollFrame);
+                dragScrollFrame = null;
+            }
+        });
+
+        document.addEventListener('drop', function() {
+            if (dragScrollFrame) {
+                cancelAnimationFrame(dragScrollFrame);
+                dragScrollFrame = null;
+            }
         });
 
         const globalNotesElement = document.getElementById('globalNotes');
