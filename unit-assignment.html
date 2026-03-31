@@ -1260,8 +1260,10 @@
         let sectionGroupCounter = 3;
         let mainTitle = 'Peregrine Catheter Build Status';
         let currentProduct = 'peregrine-catheter';
+        let saveLocked = false;
 
         function saveState() {
+            if (saveLocked) return;
             const unitPositions = {};
             const unitStacks = {}; // stackId -> [unitId, ...]
             
@@ -1519,6 +1521,8 @@
         function initializeApp() {
             const hasLoadedState = loadState();
             
+            saveLocked = true;
+
             rebuildSections();
             
             const product = productStations[currentProduct] || productStations['peregrine-catheter'];
@@ -1535,10 +1539,11 @@
             renderSectionGroups();
             
             if (!hasLoadedState) {
+                saveLocked = false;
                 createUnitGroup('Group 1', '#667eea');
                 addUnitToGroup(0, 5);
             } else {
-                renderUnitGroups(false, true);
+                renderUnitGroups(false);
                 
                 const allStates = JSON.parse(localStorage.getItem('unitAssignmentStates') || '{}');
                 const savedProductState = allStates[currentProduct];
@@ -1617,6 +1622,8 @@
                     }
                     
                     updateLegend();
+                    saveLocked = false;
+                    saveState();
                     drawAllPlanArrows();
                 }, 100);
             }
@@ -1767,12 +1774,12 @@
             }
         }
 
-        function renderUnitGroups(skipPositionRestore = false, skipSave = false) {
+        function renderUnitGroups(skipPositionRestore = false) {
             const container = document.getElementById('unitGroups');
             container.innerHTML = '';
             
             updateLegend();
-            if (!skipSave) saveState();
+            saveState();
             
             unitGroups.forEach((group, index) => {
                 const groupHeader = document.createElement('div');
@@ -3348,6 +3355,8 @@
             
             saveState();
             
+            saveLocked = true;
+
             const previousProduct = currentProduct;
             currentProduct = productId;
             
@@ -3449,7 +3458,7 @@
             populatePlanForTodayDropdown();
             
             if (savedProductState) {
-                renderUnitGroups(false, true);
+                renderUnitGroups(false);
                 
                 setTimeout(() => {
                     unitGroups.forEach((group) => {
@@ -3499,6 +3508,7 @@
                             
                             units.forEach(unit => {
                                 unit.classList.remove('selected');
+                                unit.draggable = false;
                                 stackContainer.appendChild(unit);
                             });
                             
@@ -3524,18 +3534,20 @@
                     }
                     
                     updateLegend();
+                    saveLocked = false;
+                    saveState();
                     drawAllPlanArrows();
                 }, 100);
             } else {
                 createUnitGroup('Group 1', '#667eea');
                 addUnitToGroup(0, 5);
                 updateLegend();
+                saveLocked = false;
             }
             
             renderSectionGroups();
-            saveState();
         }
-
+            
         function editMainTitle() {
             const newTitle = prompt('Enter new main title:', mainTitle);
             
