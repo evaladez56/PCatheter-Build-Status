@@ -1379,7 +1379,7 @@
                                         stations.forEach(station => {
                                             const header = station.querySelector('.station-header');
                                             if (header && header.textContent.trim() === stationName) {
-                                                const stationContent = station.querySelector('.station-content');
+                                                const stationContent = station.querySelector('.station-units');
                                                 if (stationContent) {
                                                     stationContent.appendChild(unit);
                                                     placed = true;
@@ -1397,6 +1397,48 @@
                                 }
                             });
                         });
+
+                        // Restore stacks
+                        if (state.unitStacks) {
+                            Object.entries(state.unitStacks).forEach(([stackId, unitIds]) => {
+                                const units = unitIds.map(id => document.getElementById(`unit-${id}`)).filter(Boolean);
+                                if (units.length < 2) return;
+
+                                const firstUnit = units[0];
+                                const parentContainer = firstUnit.parentElement;
+                                if (!parentContainer) return;
+
+                                const stackContainer = document.createElement('div');
+                                stackContainer.className = 'unit-stack';
+                                stackContainer.dataset.stackId = stackId;
+
+                                units.forEach(unit => {
+                                    unit.classList.remove('selected');
+                                    unit.draggable = false;
+                                    stackContainer.appendChild(unit);
+                                });
+
+                                const badge = document.createElement('div');
+                                badge.className = 'unit-stack-badge';
+                                badge.textContent = units.length;
+                                stackContainer.appendChild(badge);
+
+                                stackContainer.draggable = true;
+                                stackContainer.addEventListener('dragstart', handleStackDragStart);
+                                stackContainer.addEventListener('dragend', handleStackDragEnd);
+                                stackContainer.addEventListener('click', function(e) {
+                                    if (e.detail === 1) {
+                                        currentClickedStack = stackContainer;
+                                        updateSelectionToolbar();
+                                    }
+                                });
+                                stackContainer.addEventListener('dblclick', unstackUnits);
+
+                                parentContainer.appendChild(stackContainer);
+                                requestAnimationFrame(() => positionStackUnits(stackContainer));
+                            });
+                        }
+
                         drawAllPlanArrows();
                     }, 100);
                     
