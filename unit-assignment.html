@@ -1366,82 +1366,6 @@
                         if (notesDisplay) notesDisplay.textContent = state.notes || 'These are the notes';
                     }
                     
-                    setTimeout(() => {
-                        unitGroups.forEach((group) => {
-                            group.units.forEach(unitId => {
-                                const unit = document.getElementById(`unit-${unitId}`);
-                                if (unit) {
-                                    let placed = false;
-                                    
-                                    if (state.unitPositions && state.unitPositions[unitId]) {
-                                        const stationName = state.unitPositions[unitId];
-                                        const stations = document.querySelectorAll('.station');
-                                        stations.forEach(station => {
-                                            const header = station.querySelector('.station-header');
-                                            if (header && header.textContent.trim() === stationName) {
-                                                const stationContent = station.querySelector('.station-units');
-                                                if (stationContent) {
-                                                    stationContent.appendChild(unit);
-                                                    placed = true;
-                                                }
-                                            }
-                                        });
-                                    }
-                                    
-                                    if (!placed) {
-                                        const groupPool = document.getElementById(`group-${group.id}-pool`);
-                                        if (groupPool) {
-                                            groupPool.appendChild(unit);
-                                        }
-                                    }
-                                }
-                            });
-                        });
-
-                        // Restore stacks
-                        if (state.unitStacks) {
-                            Object.entries(state.unitStacks).forEach(([stackId, unitIds]) => {
-                                const units = unitIds.map(id => document.getElementById(`unit-${id}`)).filter(Boolean);
-                                if (units.length < 2) return;
-
-                                const firstUnit = units[0];
-                                const parentContainer = firstUnit.parentElement;
-                                if (!parentContainer) return;
-
-                                const stackContainer = document.createElement('div');
-                                stackContainer.className = 'unit-stack';
-                                stackContainer.dataset.stackId = stackId;
-
-                                units.forEach(unit => {
-                                    unit.classList.remove('selected');
-                                    unit.draggable = false;
-                                    stackContainer.appendChild(unit);
-                                });
-
-                                const badge = document.createElement('div');
-                                badge.className = 'unit-stack-badge';
-                                badge.textContent = units.length;
-                                stackContainer.appendChild(badge);
-
-                                stackContainer.draggable = true;
-                                stackContainer.addEventListener('dragstart', handleStackDragStart);
-                                stackContainer.addEventListener('dragend', handleStackDragEnd);
-                                stackContainer.addEventListener('click', function(e) {
-                                    if (e.detail === 1) {
-                                        currentClickedStack = stackContainer;
-                                        updateSelectionToolbar();
-                                    }
-                                });
-                                stackContainer.addEventListener('dblclick', unstackUnits);
-
-                                parentContainer.appendChild(stackContainer);
-                                requestAnimationFrame(() => positionStackUnits(stackContainer));
-                            });
-                        }
-
-                        drawAllPlanArrows();
-                    }, 100);
-                    
                     return true;
                 } catch (e) {
                     console.error('Error loading saved state:', e);
@@ -1614,7 +1538,7 @@
                 createUnitGroup('Group 1', '#667eea');
                 addUnitToGroup(0, 5);
             } else {
-                renderUnitGroups(false);
+                renderUnitGroups(false, true);
                 
                 const allStates = JSON.parse(localStorage.getItem('unitAssignmentStates') || '{}');
                 const savedProductState = allStates[currentProduct];
@@ -1843,12 +1767,12 @@
             }
         }
 
-        function renderUnitGroups(skipPositionRestore = false) {
+        function renderUnitGroups(skipPositionRestore = false, skipSave = false) {
             const container = document.getElementById('unitGroups');
             container.innerHTML = '';
             
             updateLegend();
-            saveState();
+            if (!skipSave) saveState();
             
             unitGroups.forEach((group, index) => {
                 const groupHeader = document.createElement('div');
@@ -3525,7 +3449,7 @@
             populatePlanForTodayDropdown();
             
             if (savedProductState) {
-                renderUnitGroups(false);
+                renderUnitGroups(false, true);
                 
                 setTimeout(() => {
                     unitGroups.forEach((group) => {
