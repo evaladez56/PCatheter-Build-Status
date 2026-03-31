@@ -284,6 +284,15 @@
             line-height: 1;
             pointer-events: none;
         }
+        
+        .unit-wait-material-indicator {
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            font-size: 18px;
+            line-height: 1;
+            pointer-events: none;
+        }
 
         .plan-arrow {
             position: absolute;
@@ -327,6 +336,111 @@
         
         .multi-drag-ghost .unit {
             opacity: 0.8;
+        }
+        
+        .unit-stack {
+            position: relative;
+            display: inline-block;
+            height: 50px;
+            padding-right: 35px;
+            max-width: 100%;
+        }
+        
+        .unit-stack .unit {
+            position: absolute;
+            top: 0;
+            margin-left: 0;
+        }
+        
+        .unit-stack .unit:nth-child(1) {
+            left: 0;
+            z-index: 10;
+        }
+        
+        .unit-stack .unit:nth-child(2) {
+            left: 20px;
+            z-index: 9;
+        }
+        
+        .unit-stack .unit:nth-child(3) {
+            left: 40px;
+            z-index: 8;
+        }
+        
+        .unit-stack .unit:nth-child(4) {
+            left: 60px;
+            z-index: 7;
+        }
+        
+        .unit-stack .unit:nth-child(5) {
+            left: 80px;
+            z-index: 6;
+        }
+        
+        .unit-stack .unit:nth-child(6) {
+            left: 100px;
+            z-index: 5;
+        }
+        
+        .unit-stack .unit:nth-child(7) {
+            left: 120px;
+            z-index: 4;
+        }
+        
+        .unit-stack .unit:nth-child(8) {
+            left: 140px;
+            z-index: 3;
+        }
+        
+        .unit-stack .unit:nth-child(n+9) {
+            left: 160px;
+            z-index: 2;
+        }
+        
+        .unit-stack-badge {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            background: #ffc107;
+            color: #000;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+        
+        .selection-toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: none;
+            gap: 10px;
+            align-items: center;
+            z-index: 5000;
+            border: 2px solid #667eea;
+        }
+        
+        .selection-toolbar.active {
+            display: flex;
+        }
+        
+        .selection-toolbar-text {
+            font-weight: 600;
+            color: #333;
+            margin-right: 10px;
         }
 
         .unit:hover {
@@ -548,6 +662,26 @@
             background: #5a6268;
         }
 
+        .btn-reset {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #e8680a;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background: #c82333;
+        }
+
         .btn-save {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -574,6 +708,7 @@
             transition: all 0.3s;
             flex: 1;
             min-width: 0;
+            overflow: hidden;
         }
 
         .station-header {
@@ -588,6 +723,7 @@
             flex-wrap: wrap;
             gap: 10px;
             min-height: 40px;
+            overflow: hidden;
         }
 
         .station.drag-over {
@@ -862,6 +998,46 @@
             padding: 8px 16px;
             font-size: 0.9em;
         }
+        
+        .toolbar-btn {
+            padding: 8px 16px;
+            font-size: 0.9em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+            background: #5568d3;
+        }
+        
+        .toolbar-btn.danger {
+            background: #dc3545;
+        }
+        
+        .toolbar-btn.danger:hover {
+            background: #c82333;
+        }
+
+        .toolbar-btn.grey {
+            background: #6c757d;
+        }
+
+        .toolbar-btn.grey:hover {
+            background: #5a6268;
+        }
+
+        .toolbar-btn.orange {
+            background: #fd7e14;
+        }
+
+        .toolbar-btn.orange:hover {
+            background: #e8680a;
+        }
 
         .reset-button {
             background: #dc3545;
@@ -1008,6 +1184,14 @@
             <button class="reset-button" onclick="resetAssignments()">Reset All</button>
             <button class="screenshot-button" onclick="takeScreenshot()">📸 Take Screenshot</button>
         </div>
+        
+        <div class="selection-toolbar" id="selectionToolbar">
+            <span class="selection-toolbar-text" id="toolbarText"><span id="selectedCount">0</span> units selected</span>
+            <button class="toolbar-btn grey" id="editSelectionBtn" onclick="openSelectionModal()" style="display: none;">✏️ Edit Selection</button>
+            <button class="toolbar-btn" id="stackBtn" onclick="stackSelectedUnits()" style="display: none;">📚 Stack Units</button>
+            <button class="toolbar-btn orange" id="unstackBtn" onclick="unstackClickedStack()" style="display: none;">📂 Unstack</button>
+            <button class="toolbar-btn danger" onclick="clearSelection()">✕ Clear Selection</button>
+        </div>
     </div>
 
     <div class="modal-overlay" id="unitModal">
@@ -1032,6 +1216,10 @@
                     <label for="unitWaitEngineer">Wait for Engineer 🛑</label>
                 </div>
                 <div class="checkbox-group">
+                    <input type="checkbox" id="unitWaitMaterial">
+                    <label for="unitWaitMaterial">Waiting for Material ⚙️</label>
+                </div>
+                <div class="checkbox-group">
                     <input type="checkbox" id="unitHot">
                     <label for="unitHot">Hot 🔥</label>
                 </div>
@@ -1052,6 +1240,8 @@
             </div>
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeUnitModal()">Cancel</button>
+                <button class="btn-reset" onclick="resetUnitData()">Reset</button>
+                <button class="btn-delete" onclick="deleteUnit()">Delete</button>
                 <button class="btn-save" onclick="saveUnitData()">Save</button>
             </div>
         </div>
@@ -1073,6 +1263,8 @@
 
         function saveState() {
             const unitPositions = {};
+            const unitStacks = {}; // stackId -> [unitId, ...]
+            
             document.querySelectorAll('.unit').forEach(unit => {
                 const unitId = unit.dataset.unitId;
                 const station = unit.closest('.station');
@@ -1084,6 +1276,14 @@
                 }
             });
             
+            document.querySelectorAll('.unit-stack').forEach(stack => {
+                const stackId = stack.dataset.stackId;
+                const units = Array.from(stack.querySelectorAll('.unit')).map(u => u.dataset.unitId);
+                if (stackId && units.length > 1) {
+                    unitStacks[stackId] = units;
+                }
+            });
+            
             const productState = {
                 unitCounter,
                 stationCounter,
@@ -1091,6 +1291,7 @@
                 unitGroups,
                 unitData,
                 unitPositions,
+                unitStacks,
                 sectionGroups,
                 sectionGroupCounter,
                 notes: document.getElementById('globalNotes')?.value || ''
@@ -1389,7 +1590,7 @@
                                     stations.forEach(station => {
                                         const header = station.querySelector('.station-header');
                                         if (header && header.textContent.trim() === stationName) {
-                                            const stationContent = station.querySelector('.station-content');
+                                            const stationContent = station.querySelector('.station-units');
                                             if (stationContent) {
                                                 stationContent.appendChild(unit);
                                                 placed = true;
@@ -1407,6 +1608,48 @@
                             }
                         });
                     });
+                    
+                    // Restore stacks
+                    if (savedProductState && savedProductState.unitStacks) {
+                        Object.entries(savedProductState.unitStacks).forEach(([stackId, unitIds]) => {
+                            const units = unitIds.map(id => document.getElementById(`unit-${id}`)).filter(Boolean);
+                            if (units.length < 2) return;
+                            
+                            const firstUnit = units[0];
+                            const parentContainer = firstUnit.parentElement;
+                            if (!parentContainer) return;
+                            
+                            const stackContainer = document.createElement('div');
+                            stackContainer.className = 'unit-stack';
+                            stackContainer.dataset.stackId = stackId;
+                            
+                            units.forEach(unit => {
+                                unit.classList.remove('selected');
+                                unit.draggable = false;
+                                stackContainer.appendChild(unit);
+                            });
+                            
+                            const badge = document.createElement('div');
+                            badge.className = 'unit-stack-badge';
+                            badge.textContent = units.length;
+                            stackContainer.appendChild(badge);
+                            
+                            stackContainer.draggable = true;
+                            stackContainer.addEventListener('dragstart', handleStackDragStart);
+                            stackContainer.addEventListener('dragend', handleStackDragEnd);
+                            stackContainer.addEventListener('click', function(e) {
+                                if (e.detail === 1) {
+                                    currentClickedStack = stackContainer;
+                                    updateSelectionToolbar();
+                                }
+                            });
+                            stackContainer.addEventListener('dblclick', unstackUnits);
+                            
+                            parentContainer.appendChild(stackContainer);
+                            requestAnimationFrame(() => positionStackUnits(stackContainer));
+                        });
+                    }
+                    
                     updateLegend();
                     drawAllPlanArrows();
                 }, 100);
@@ -1529,6 +1772,7 @@
                 const statusLegends = [
                     { symbol: '🔥', label: 'Hot' },
                     { symbol: '🛑', label: 'Wait for Engineer' },
+                    { symbol: '⚙️', label: 'Waiting for Material' },
                     { symbol: '✓', label: 'Complete' }
                 ];
                 
@@ -1647,6 +1891,13 @@
                         unit.appendChild(waitIndicator);
                     }
                     
+                    if (unitData[unitId] && unitData[unitId].waitMaterial) {
+                        const waitMaterialIndicator = document.createElement('span');
+                        waitMaterialIndicator.className = 'unit-wait-material-indicator';
+                        waitMaterialIndicator.textContent = '⚙️';
+                        unit.appendChild(waitMaterialIndicator);
+                    }
+                    
                     if (unitData[unitId] && unitData[unitId].complete) {
                         unit.classList.add('complete');
                         const completeIndicator = document.createElement('span');
@@ -1694,12 +1945,49 @@
                             const unit = document.getElementById(`unit-${unitId}`);
                             if (unit) {
                                 unit.classList.remove('dragging');
+                                
+                                const oldStack = unit.closest('.unit-stack');
+                                if (oldStack) {
+                                    unit.style.position = '';
+                                    unit.style.left = '';
+                                    unit.style.top = '';
+                                    unit.style.zIndex = '';
+                                }
+                                
                                 unitsPool.appendChild(unit);
+                                
+                                if (oldStack) {
+                                    updateStackBadge(oldStack);
+                                }
                             }
                         });
                         clearSelection();
                     } else if (draggedElement) {
-                        unitsPool.appendChild(draggedElement);
+                        const isStack = draggedElement.classList.contains('unit-stack');
+                        
+                        if (isStack) {
+                            draggedElement.style.opacity = '';
+                            draggedElement.classList.remove('dragging');
+                            unitsPool.appendChild(draggedElement);
+                            requestAnimationFrame(() => positionStackUnits(draggedElement));
+                        } else {
+                            const oldStack = draggedElement.closest('.unit-stack');
+                            if (oldStack) {
+                                draggedElement.style.position = '';
+                                draggedElement.style.left = '';
+                                draggedElement.style.top = '';
+                                draggedElement.style.zIndex = '';
+                            }
+                            
+                            draggedElement.classList.remove('dragging');
+                            draggedElement.classList.remove('selected');
+                            draggedElement.style.opacity = '';
+                            unitsPool.appendChild(draggedElement);
+                            
+                            if (oldStack) {
+                                updateStackBadge(oldStack);
+                            }
+                        }
                     }
                     
                     if (multiDragGhost) {
@@ -1710,6 +1998,12 @@
                     document.removeEventListener('dragover', updateMultiDragGhost);
                     
                     setTimeout(() => {
+                        const allUnits = document.querySelectorAll('.unit');
+                        allUnits.forEach(u => {
+                            u.classList.remove('dragging');
+                            u.classList.remove('selected');
+                        });
+                        document.querySelectorAll('.unit-stack').forEach(stack => positionStackUnits(stack));
                         drawAllPlanArrows();
                         saveState();
                     }, 50);
@@ -1829,10 +2123,20 @@
             if (selectedUnits.size > 0 && selectedUnits.has(e.target.dataset.unitId)) {
                 selectedUnits.forEach(unitId => {
                     const unit = document.getElementById(`unit-${unitId}`);
-                    if (unit) unit.classList.remove('dragging');
+                    if (unit) {
+                        unit.classList.remove('dragging');
+                        unit.classList.remove('selected');
+                    }
                 });
             } else {
                 e.target.classList.remove('dragging');
+                e.target.classList.remove('selected');
+            }
+            
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+                draggedElement.classList.remove('selected');
+                draggedElement = null;
             }
             
             if (multiDragGhost) {
@@ -1919,15 +2223,58 @@
                         const unit = document.getElementById(`unit-${unitId}`);
                         if (unit && unitsContainer) {
                             unit.classList.remove('dragging');
+                            
+                            const oldStack = unit.closest('.unit-stack');
+                            if (oldStack) {
+                                unit.style.position = '';
+                                unit.style.left = '';
+                                unit.style.top = '';
+                                unit.style.zIndex = '';
+                            }
+                            
                             unitsContainer.appendChild(unit);
+                            
+                            if (oldStack) {
+                                updateStackBadge(oldStack);
+                            }
                         }
                     });
                     clearSelection();
                 } else if (draggedElement && unitsContainer) {
-                    unitsContainer.appendChild(draggedElement);
+                    const isStack = draggedElement.classList.contains('unit-stack');
+                    
+                    if (isStack) {
+                        draggedElement.style.opacity = '';
+                        draggedElement.classList.remove('dragging');
+                        unitsContainer.appendChild(draggedElement);
+                        requestAnimationFrame(() => positionStackUnits(draggedElement));
+                    } else {
+                        const oldStack = draggedElement.closest('.unit-stack');
+                        if (oldStack) {
+                            draggedElement.style.position = '';
+                            draggedElement.style.left = '';
+                            draggedElement.style.top = '';
+                            draggedElement.style.zIndex = '';
+                        }
+                        
+                        draggedElement.classList.remove('dragging');
+                        draggedElement.classList.remove('selected');
+                        draggedElement.style.opacity = '';
+                        unitsContainer.appendChild(draggedElement);
+                        
+                        if (oldStack) {
+                            updateStackBadge(oldStack);
+                        }
+                    }
                 }
                 
                 setTimeout(() => {
+                    const allUnits = document.querySelectorAll('.unit');
+                    allUnits.forEach(u => {
+                        u.classList.remove('dragging');
+                        u.classList.remove('selected');
+                    });
+                    document.querySelectorAll('.unit-stack').forEach(stack => positionStackUnits(stack));
                     drawAllPlanArrows();
                     saveState();
                 }, 50);
@@ -1938,7 +2285,86 @@
                 multiDragGhost = null;
             }
             
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+                draggedElement.classList.remove('selected');
+                draggedElement.style.opacity = '';
+                draggedElement = null;
+            }
+            
             document.removeEventListener('dragover', updateMultiDragGhost);
+        }
+        
+        function positionStackUnits(stack) {
+            if (!stack || !stack.isConnected) return;
+            const units = Array.from(stack.querySelectorAll('.unit'));
+            if (units.length === 0) return;
+
+            const UNIT_SIZE = 50;
+            const BADGE_WIDTH = 35;
+            const DEFAULT_OFFSET = 18; // px between each unit when there's plenty of room
+            const MIN_OFFSET = 10;     // never compress tighter than this
+
+            const parent = stack.parentElement;
+            const parentWidth = parent ? parent.getBoundingClientRect().width : 0;
+
+            let offset;
+            if (parentWidth > 0 && units.length > 1) {
+                // How much room do we have after reserving space for first unit + badge?
+                const availableSpread = parentWidth - UNIT_SIZE - BADGE_WIDTH - 10;
+                const idealSpread = DEFAULT_OFFSET * (units.length - 1);
+                if (idealSpread <= availableSpread) {
+                    offset = DEFAULT_OFFSET;
+                } else {
+                    offset = Math.max(MIN_OFFSET, availableSpread / (units.length - 1));
+                }
+            } else {
+                offset = DEFAULT_OFFSET;
+            }
+
+            const totalWidth = Math.round(offset * (units.length - 1) + UNIT_SIZE);
+
+            units.forEach((unit, i) => {
+                unit.style.position = 'absolute';
+                unit.style.left = Math.round(i * offset) + 'px';
+                unit.style.top = '0px';
+                unit.style.zIndex = units.length - i + 1;
+            });
+
+            stack.style.width = (totalWidth + BADGE_WIDTH) + 'px';
+        }
+
+        function updateStackBadge(stack) {
+            if (!stack || !stack.isConnected) return;
+
+            const units = stack.querySelectorAll('.unit');
+            const badge = stack.querySelector('.unit-stack-badge');
+
+            if (units.length === 0) {
+                stack.remove();
+                return;
+            }
+
+            if (units.length === 1) {
+                const unit = units[0];
+                const parentContainer = stack.parentElement;
+                unit.style.position = '';
+                unit.style.left = '';
+                unit.style.top = '';
+                unit.style.zIndex = '';
+                unit.draggable = true;
+                unit.classList.remove('dragging');
+                unit.classList.remove('selected');
+                parentContainer.appendChild(unit);
+                stack.remove();
+                return;
+            }
+
+            if (badge) {
+                badge.textContent = units.length;
+            }
+
+            positionStackUnits(stack);
         }
 
         function resetAssignments() {
@@ -1953,6 +2379,7 @@
                         hot: false,
                         complete: false,
                         waitEngineer: false,
+                        waitMaterial: false,
                         planForToday: ''
                     };
                     updateUnitAppearance(unit, unitId);
@@ -1978,6 +2405,7 @@
 
         let currentEditingUnit = null;
         let currentEditingGroup = null;
+        let currentSelectionIds = [];
         let isGroupEdit = false;
         
         function initializeSelectionBox() {
@@ -2079,6 +2507,7 @@
             if (unit) {
                 unit.classList.add('selected');
             }
+            updateSelectionToolbar();
         }
         
         function deselectUnit(unitId) {
@@ -2097,6 +2526,231 @@
                 }
             });
             selectedUnits.clear();
+            updateSelectionToolbar();
+        }
+        
+        let currentClickedStack = null;
+        
+        function updateSelectionToolbar() {
+            const toolbar = document.getElementById('selectionToolbar');
+            const countSpan = document.getElementById('selectedCount');
+            const stackBtn = document.getElementById('stackBtn');
+            const unstackBtn = document.getElementById('unstackBtn');
+            const editSelectionBtn = document.getElementById('editSelectionBtn');
+            const toolbarText = document.getElementById('toolbarText');
+            
+            if (currentClickedStack) {
+                toolbar.classList.add('active');
+                const unitCount = currentClickedStack.querySelectorAll('.unit').length;
+                toolbarText.innerHTML = `Stack of <span id="selectedCount">${unitCount}</span> units`;
+                stackBtn.style.display = 'none';
+                unstackBtn.style.display = 'inline-block';
+                editSelectionBtn.style.display = 'inline-block';
+            } else if (selectedUnits.size > 0) {
+                toolbar.classList.add('active');
+                countSpan.textContent = selectedUnits.size;
+                toolbarText.innerHTML = `<span id="selectedCount">${selectedUnits.size}</span> units selected`;
+                stackBtn.style.display = 'inline-block';
+                unstackBtn.style.display = 'inline-block';
+                editSelectionBtn.style.display = 'inline-block';
+            } else {
+                toolbar.classList.remove('active');
+                stackBtn.style.display = 'none';
+                unstackBtn.style.display = 'none';
+                editSelectionBtn.style.display = 'none';
+                currentClickedStack = null;
+            }
+        }
+        
+        function openSelectionModal() {
+            // Gather unit IDs from either a clicked stack or the current selection
+            let unitIds = [];
+            let modalTitle = '';
+
+            if (currentClickedStack) {
+                unitIds = Array.from(currentClickedStack.querySelectorAll('.unit')).map(u => u.dataset.unitId);
+                modalTitle = `Stack (${unitIds.length} units)`;
+            } else if (selectedUnits.size > 0) {
+                unitIds = Array.from(selectedUnits);
+                modalTitle = `Selection (${unitIds.length} units)`;
+            }
+
+            if (unitIds.length === 0) return;
+
+            currentEditingGroup = null;
+            currentEditingUnit = null;
+            isGroupEdit = true;
+            // Store the ids directly so saveUnitData can use them
+            currentSelectionIds = unitIds;
+
+            const modal = document.getElementById('unitModal');
+            document.getElementById('modalUnitNumber').textContent = modalTitle;
+
+            const unitSelectionContainer = document.getElementById('unitSelectionContainer');
+            unitSelectionContainer.style.display = 'block';
+
+            const checkboxContainer = document.getElementById('unitCheckboxes');
+            checkboxContainer.innerHTML = '';
+
+            unitIds.forEach(unitId => {
+                const parts = unitId.split('-');
+                const unitNum = parts[1];
+                const groupId = parts[0];
+                const group = unitGroups.find(g => g.id == groupId);
+                const groupName = group ? group.name : '';
+
+                const checkboxItem = document.createElement('div');
+                checkboxItem.className = 'unit-checkbox-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `unit-select-${unitId}`;
+                checkbox.value = unitId;
+                checkbox.checked = true;
+
+                const label = document.createElement('label');
+                label.htmlFor = `unit-select-${unitId}`;
+                label.textContent = groupName ? `Unit ${unitNum} (${groupName})` : `Unit ${unitNum}`;
+
+                checkboxItem.appendChild(checkbox);
+                checkboxItem.appendChild(label);
+                checkboxContainer.appendChild(checkboxItem);
+            });
+
+            // Seed form fields from the first unit's data
+            const firstData = unitData[unitIds[0]] || {};
+            document.getElementById('unitNotes').value = firstData.notes || '';
+            document.getElementById('unitHot').checked = firstData.hot || false;
+            document.getElementById('unitComplete').checked = firstData.complete || false;
+            document.getElementById('unitWaitEngineer').checked = firstData.waitEngineer || false;
+            document.getElementById('unitWaitMaterial').checked = firstData.waitMaterial || false;
+            document.getElementById('unitPlanForToday').value = firstData.planForToday || '';
+
+            modal.classList.add('active');
+        }
+
+        function stackSelectedUnits() {
+            if (selectedUnits.size < 2) {
+                alert('Please select at least 2 units to stack.');
+                return;
+            }
+            
+            const unitsArray = Array.from(selectedUnits);
+            const firstUnitId = unitsArray[0];
+            const firstUnit = document.getElementById(`unit-${firstUnitId}`);
+            
+            if (!firstUnit) return;
+            
+            const parentContainer = firstUnit.parentElement;
+            
+            const stackContainer = document.createElement('div');
+            stackContainer.className = 'unit-stack';
+            stackContainer.dataset.stackId = `stack-${Date.now()}`;
+            
+            unitsArray.forEach(unitId => {
+                const unit = document.getElementById(`unit-${unitId}`);
+                if (unit) {
+                    unit.classList.remove('selected');
+                    unit.draggable = false;
+                    stackContainer.appendChild(unit);
+                }
+            });
+            
+            const badge = document.createElement('div');
+            badge.className = 'unit-stack-badge';
+            badge.textContent = unitsArray.length;
+            stackContainer.appendChild(badge);
+            
+            stackContainer.draggable = true;
+            stackContainer.addEventListener('dragstart', handleStackDragStart);
+            stackContainer.addEventListener('dragend', handleStackDragEnd);
+            stackContainer.addEventListener('click', function(e) {
+                if (e.detail === 1) {
+                    currentClickedStack = stackContainer;
+                    updateSelectionToolbar();
+                }
+            });
+            stackContainer.addEventListener('dblclick', unstackUnits);
+            
+            parentContainer.appendChild(stackContainer);
+            requestAnimationFrame(() => positionStackUnits(stackContainer));
+            
+            selectedUnits.clear();
+            currentClickedStack = stackContainer;
+            updateSelectionToolbar();
+            saveState();
+            drawAllPlanArrows();
+        }
+        
+        function handleStackDragStart(e) {
+            draggedElement = e.target;
+            e.target.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function handleStackDragEnd(e) {
+            e.target.style.opacity = '';
+        }
+        
+        function unstackUnits(e) {
+            e.stopPropagation();
+            const stack = e.currentTarget;
+            const parentContainer = stack.parentElement;
+            const units = Array.from(stack.querySelectorAll('.unit'));
+            const badge = stack.querySelector('.unit-stack-badge');
+            
+            if (badge) {
+                badge.remove();
+            }
+            
+            units.forEach(unit => {
+                unit.style.position = '';
+                unit.style.left = '';
+                unit.style.top = '';
+                unit.style.zIndex = '';
+                unit.style.opacity = '';
+                unit.draggable = true;
+                unit.classList.remove('dragging');
+                unit.classList.remove('selected');
+                parentContainer.appendChild(unit);
+            });
+            
+            stack.remove();
+            currentClickedStack = null;
+            updateSelectionToolbar();
+            saveState();
+            drawAllPlanArrows();
+        }
+        
+        function unstackClickedStack() {
+            if (!currentClickedStack) return;
+            
+            const stack = currentClickedStack;
+            const parentContainer = stack.parentElement;
+            const units = Array.from(stack.querySelectorAll('.unit'));
+            const badge = stack.querySelector('.unit-stack-badge');
+            
+            if (badge) {
+                badge.remove();
+            }
+            
+            units.forEach(unit => {
+                unit.style.position = '';
+                unit.style.left = '';
+                unit.style.top = '';
+                unit.style.zIndex = '';
+                unit.style.opacity = '';
+                unit.draggable = true;
+                unit.classList.remove('dragging');
+                unit.classList.remove('selected');
+                parentContainer.appendChild(unit);
+            });
+            
+            stack.remove();
+            currentClickedStack = null;
+            updateSelectionToolbar();
+            saveState();
+            drawAllPlanArrows();
         }
 
         function openUnitModal(unitId) {
@@ -2119,6 +2773,7 @@
                     hot: false,
                     complete: false,
                     waitEngineer: false,
+                    waitMaterial: false,
                     planForToday: ''
                 };
             }
@@ -2128,6 +2783,7 @@
             document.getElementById('unitHot').checked = data.hot || false;
             document.getElementById('unitComplete').checked = data.complete || false;
             document.getElementById('unitWaitEngineer').checked = data.waitEngineer || false;
+            document.getElementById('unitWaitMaterial').checked = data.waitMaterial || false;
             document.getElementById('unitPlanForToday').value = data.planForToday || '';
             
             modal.classList.add('active');
@@ -2178,6 +2834,7 @@
             document.getElementById('unitHot').checked = data.hot || false;
             document.getElementById('unitComplete').checked = data.complete || false;
             document.getElementById('unitWaitEngineer').checked = data.waitEngineer || false;
+            document.getElementById('unitWaitMaterial').checked = data.waitMaterial || false;
             document.getElementById('unitPlanForToday').value = data.planForToday || '';
             
             modal.classList.add('active');
@@ -2190,6 +2847,7 @@
             unitSelectionContainer.style.display = 'none';
             currentEditingUnit = null;
             currentEditingGroup = null;
+            currentSelectionIds = [];
             isGroupEdit = false;
         }
 
@@ -2207,7 +2865,7 @@
             const data = unitData[unitId];
             if (!data) return;
             
-            const existingIndicators = unitElement.querySelectorAll('.unit-hot-indicator, .unit-complete-indicator, .unit-wait-indicator');
+            const existingIndicators = unitElement.querySelectorAll('.unit-hot-indicator, .unit-complete-indicator, .unit-wait-indicator, .unit-wait-material-indicator');
             existingIndicators.forEach(ind => ind.remove());
             
             unitElement.classList.remove('complete');
@@ -2235,6 +2893,13 @@
                 unitElement.appendChild(waitIndicator);
             }
             
+            if (data.waitMaterial) {
+                const waitMaterialIndicator = document.createElement('span');
+                waitMaterialIndicator.className = 'unit-wait-material-indicator';
+                waitMaterialIndicator.textContent = '⚙️';
+                unitElement.appendChild(waitMaterialIndicator);
+            }
+            
             if (data.complete) {
                 unitElement.classList.add('complete');
                 const completeIndicator = document.createElement('span');
@@ -2255,6 +2920,7 @@
                 hot: document.getElementById('unitHot').checked,
                 complete: document.getElementById('unitComplete').checked,
                 waitEngineer: document.getElementById('unitWaitEngineer').checked,
+                waitMaterial: document.getElementById('unitWaitMaterial').checked,
                 planForToday: document.getElementById('unitPlanForToday').value
             };
             
@@ -2272,6 +2938,17 @@
                         }
                     });
                 }
+            } else if (isGroupEdit && currentSelectionIds.length > 0) {
+                const selectedCheckboxes = document.querySelectorAll('#unitCheckboxes input[type="checkbox"]:checked');
+                const selectedUnitIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+                
+                selectedUnitIds.forEach(unitId => {
+                    unitData[unitId] = { ...formData };
+                    const unitElement = document.getElementById(`unit-${unitId}`);
+                    if (unitElement) {
+                        updateUnitAppearance(unitElement, unitId);
+                    }
+                });
             } else if (currentEditingUnit) {
                 unitData[currentEditingUnit] = formData;
                 const unitElement = document.getElementById(`unit-${currentEditingUnit}`);
@@ -2283,6 +2960,70 @@
             drawAllPlanArrows();
             saveState();
             closeUnitModal();
+        }
+
+        function resetUnitData() {
+            if (!currentEditingUnit) return;
+            
+            const clearedData = {
+                notes: '',
+                hot: false,
+                complete: false,
+                waitEngineer: false,
+                waitMaterial: false,
+                planForToday: ''
+            };
+            
+            unitData[currentEditingUnit] = clearedData;
+            
+            // Reset form fields
+            document.getElementById('unitNotes').value = '';
+            document.getElementById('unitHot').checked = false;
+            document.getElementById('unitComplete').checked = false;
+            document.getElementById('unitWaitEngineer').checked = false;
+            document.getElementById('unitWaitMaterial').checked = false;
+            document.getElementById('unitPlanForToday').value = '';
+            
+            const unitElement = document.getElementById(`unit-${currentEditingUnit}`);
+            if (unitElement) {
+                updateUnitAppearance(unitElement, currentEditingUnit);
+            }
+            
+            drawAllPlanArrows();
+            saveState();
+            closeUnitModal();
+        }
+
+        function deleteUnit() {
+            if (!currentEditingUnit) return;
+            
+            const unitId = currentEditingUnit;
+            
+            // Remove from unitGroups
+            unitGroups.forEach(group => {
+                const idx = group.units.indexOf(unitId);
+                if (idx !== -1) {
+                    group.units.splice(idx, 1);
+                }
+            });
+            
+            // Remove unitData entry
+            delete unitData[unitId];
+            
+            // Remove the DOM element (may be in a stack)
+            const unitElement = document.getElementById(`unit-${unitId}`);
+            if (unitElement) {
+                const parentStack = unitElement.closest('.unit-stack');
+                unitElement.remove();
+                if (parentStack) {
+                    updateStackBadge(parentStack);
+                }
+            }
+            
+            closeUnitModal();
+            updateLegend();
+            drawAllPlanArrows();
+            saveState();
         }
 
         function drawAllPlanArrows() {
@@ -2736,7 +3477,7 @@
                                     stations.forEach(station => {
                                         const header = station.querySelector('.station-header');
                                         if (header && header.textContent.trim() === stationName) {
-                                            const stationContent = station.querySelector('.station-content');
+                                            const stationContent = station.querySelector('.station-units');
                                             if (stationContent) {
                                                 stationContent.appendChild(unit);
                                                 placed = true;
@@ -2754,6 +3495,47 @@
                             }
                         });
                     });
+                    
+                    // Restore stacks
+                    if (savedProductState.unitStacks) {
+                        Object.entries(savedProductState.unitStacks).forEach(([stackId, unitIds]) => {
+                            const units = unitIds.map(id => document.getElementById(`unit-${id}`)).filter(Boolean);
+                            if (units.length < 2) return;
+                            
+                            const firstUnit = units[0];
+                            const parentContainer = firstUnit.parentElement;
+                            if (!parentContainer) return;
+                            
+                            const stackContainer = document.createElement('div');
+                            stackContainer.className = 'unit-stack';
+                            stackContainer.dataset.stackId = stackId;
+                            
+                            units.forEach(unit => {
+                                unit.classList.remove('selected');
+                                stackContainer.appendChild(unit);
+                            });
+                            
+                            const badge = document.createElement('div');
+                            badge.className = 'unit-stack-badge';
+                            badge.textContent = units.length;
+                            stackContainer.appendChild(badge);
+                            
+                            stackContainer.draggable = true;
+                            stackContainer.addEventListener('dragstart', handleStackDragStart);
+                            stackContainer.addEventListener('dragend', handleStackDragEnd);
+                            stackContainer.addEventListener('click', function(e) {
+                                if (e.detail === 1) {
+                                    currentClickedStack = stackContainer;
+                                    updateSelectionToolbar();
+                                }
+                            });
+                            stackContainer.addEventListener('dblclick', unstackUnits);
+                            
+                            parentContainer.appendChild(stackContainer);
+                            requestAnimationFrame(() => positionStackUnits(stackContainer));
+                        });
+                    }
+                    
                     updateLegend();
                     drawAllPlanArrows();
                 }, 100);
@@ -2790,6 +3572,9 @@
 
         window.addEventListener('resize', drawAllPlanArrows);
         window.addEventListener('scroll', drawAllPlanArrows);
+        window.addEventListener('resize', () => {
+            document.querySelectorAll('.unit-stack').forEach(stack => positionStackUnits(stack));
+        });
 
         const globalNotesElement = document.getElementById('globalNotes');
         if (globalNotesElement) {
