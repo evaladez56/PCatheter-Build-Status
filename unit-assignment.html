@@ -681,6 +681,15 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             background: #c82333;
         }
+        
+        .btn-unstack {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .btn-unstack:hover {
+            background: #e68900;
+        }
 
         .btn-save {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1242,6 +1251,7 @@
                 <button class="btn-cancel" onclick="closeUnitModal()">Cancel</button>
                 <button class="btn-reset" onclick="resetUnitData()">Reset</button>
                 <button class="btn-delete" onclick="deleteUnit()">Delete</button>
+                <button class="btn-unstack" id="modalUnstackBtn" onclick="unstackFromModal()" style="display: none;">📂 Unstack</button>
                 <button class="btn-save" onclick="saveUnitData()">Save</button>
             </div>
         </div>
@@ -1597,7 +1607,16 @@
                             units.forEach(unit => {
                                 unit.classList.remove('selected');
                                 unit.draggable = false;
-                                stackContainer.appendChild(unit);
+                                
+                                const clonedUnit = unit.cloneNode(true);
+                                clonedUnit.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                    currentClickedStack = stackContainer;
+                                    openSelectionModal();
+                                });
+                                
+                                stackContainer.appendChild(clonedUnit);
+                                unit.remove();
                             });
                             
                             const badge = document.createElement('div');
@@ -1609,12 +1628,16 @@
                             stackContainer.addEventListener('dragstart', handleStackDragStart);
                             stackContainer.addEventListener('dragend', handleStackDragEnd);
                             stackContainer.addEventListener('click', function(e) {
-                                if (e.detail === 1) {
-                                    currentClickedStack = stackContainer;
-                                    updateSelectionToolbar();
-                                }
+                                console.log('Restored stack clicked', e.target);
+                                currentClickedStack = stackContainer;
+                                updateSelectionToolbar();
                             });
-                            stackContainer.addEventListener('dblclick', unstackUnits);
+                            stackContainer.addEventListener('dblclick', function(e) {
+                                if (e.target.classList.contains('unit') || e.target.closest('.unit')) {
+                                    return;
+                                }
+                                unstackUnits(e);
+                            });
                             
                             parentContainer.appendChild(stackContainer);
                             requestAnimationFrame(() => positionStackUnits(stackContainer));
@@ -1976,7 +1999,7 @@
                             u.classList.remove('dragging');
                             u.classList.remove('selected');
                         });
-                        document.querySelectorAll('.unit-stack').forEach(stack => positionStackUnits(stack));
+                        sortUnitsByNumber(unitsPool);
                         drawAllPlanArrows();
                         saveState();
                     }, 50);
@@ -2182,6 +2205,29 @@
             }
         }
 
+        function sortUnitsByNumber(container) {
+            if (!container) return;
+            
+            const units = Array.from(container.querySelectorAll(':scope > .unit'));
+            const stacks = Array.from(container.querySelectorAll(':scope > .unit-stack'));
+            
+            units.sort((a, b) => {
+                const groupIdA = parseInt(a.dataset.groupId) || 0;
+                const groupIdB = parseInt(b.dataset.groupId) || 0;
+                
+                if (groupIdA !== groupIdB) {
+                    return groupIdA - groupIdB;
+                }
+                
+                const numA = parseInt(a.dataset.unitId.split('-')[1]) || 0;
+                const numB = parseInt(b.dataset.unitId.split('-')[1]) || 0;
+                return numA - numB;
+            });
+            
+            units.forEach(unit => container.appendChild(unit));
+            stacks.forEach(stack => container.appendChild(stack));
+        }
+        
         function handleDrop(e) {
             e.preventDefault();
             
@@ -2247,6 +2293,7 @@
                         u.classList.remove('dragging');
                         u.classList.remove('selected');
                     });
+                    sortUnitsByNumber(unitsContainer);
                     document.querySelectorAll('.unit-stack').forEach(stack => positionStackUnits(stack));
                     drawAllPlanArrows();
                     saveState();
@@ -2560,10 +2607,12 @@
             // Gather unit IDs from either a clicked stack or the current selection
             let unitIds = [];
             let modalTitle = '';
+            let isStack = false;
 
             if (currentClickedStack) {
                 unitIds = Array.from(currentClickedStack.querySelectorAll('.unit')).map(u => u.dataset.unitId);
                 modalTitle = `Stack (${unitIds.length} units)`;
+                isStack = true;
             } else if (selectedUnits.size > 0) {
                 unitIds = Array.from(selectedUnits);
                 modalTitle = `Selection (${unitIds.length} units)`;
@@ -2579,6 +2628,13 @@
 
             const modal = document.getElementById('unitModal');
             document.getElementById('modalUnitNumber').textContent = modalTitle;
+            
+            const modalUnstackBtn = document.getElementById('modalUnstackBtn');
+            if (isStack) {
+                modalUnstackBtn.style.display = 'inline-block';
+            } else {
+                modalUnstackBtn.style.display = 'none';
+            }
 
             const unitSelectionContainer = document.getElementById('unitSelectionContainer');
             unitSelectionContainer.style.display = 'block';
@@ -2646,7 +2702,16 @@
                 if (unit) {
                     unit.classList.remove('selected');
                     unit.draggable = false;
-                    stackContainer.appendChild(unit);
+                    
+                    const clonedUnit = unit.cloneNode(true);
+                    clonedUnit.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        currentClickedStack = stackContainer;
+                        openSelectionModal();
+                    });
+                    
+                    stackContainer.appendChild(clonedUnit);
+                    unit.remove();
                 }
             });
             
@@ -2659,15 +2724,23 @@
             stackContainer.addEventListener('dragstart', handleStackDragStart);
             stackContainer.addEventListener('dragend', handleStackDragEnd);
             stackContainer.addEventListener('click', function(e) {
-                if (e.detail === 1) {
-                    currentClickedStack = stackContainer;
-                    updateSelectionToolbar();
-                }
+                console.log('Stack clicked', e.target);
+                currentClickedStack = stackContainer;
+                updateSelectionToolbar();
             });
-            stackContainer.addEventListener('dblclick', unstackUnits);
+            stackContainer.addEventListener('dblclick', function(e) {
+                if (e.target.classList.contains('unit') || e.target.closest('.unit')) {
+                    return;
+                }
+                unstackUnits(e);
+            });
             
             parentContainer.appendChild(stackContainer);
-            requestAnimationFrame(() => positionStackUnits(stackContainer));
+            requestAnimationFrame(() => {
+                positionStackUnits(stackContainer);
+                // Ensure click handlers work after positioning
+                stackContainer.style.pointerEvents = 'auto';
+            });
             
             selectedUnits.clear();
             currentClickedStack = stackContainer;
@@ -2712,39 +2785,129 @@
             stack.remove();
             currentClickedStack = null;
             updateSelectionToolbar();
-            saveState();
-            drawAllPlanArrows();
+            
+            setTimeout(() => {
+                sortUnitsByNumber(parentContainer);
+                saveState();
+                drawAllPlanArrows();
+            }, 10);
         }
         
         function unstackClickedStack() {
-            if (!currentClickedStack) return;
+            console.log('unstackClickedStack called, currentClickedStack:', currentClickedStack);
+            if (!currentClickedStack) {
+                console.log('No currentClickedStack set!');
+                return;
+            }
             
             const stack = currentClickedStack;
             const parentContainer = stack.parentElement;
             const units = Array.from(stack.querySelectorAll('.unit'));
             const badge = stack.querySelector('.unit-stack-badge');
+            console.log('Unstacking', units.length, 'units');
             
             if (badge) {
                 badge.remove();
             }
             
             units.forEach(unit => {
-                unit.style.position = '';
-                unit.style.left = '';
-                unit.style.top = '';
-                unit.style.zIndex = '';
-                unit.style.opacity = '';
-                unit.draggable = true;
-                unit.classList.remove('dragging');
-                unit.classList.remove('selected');
-                parentContainer.appendChild(unit);
+                const unitId = unit.dataset.unitId;
+                const groupId = unit.dataset.groupId;
+                
+                // Create a fresh unit element with proper event listeners
+                const newUnit = document.createElement('div');
+                newUnit.className = 'unit';
+                newUnit.draggable = true;
+                newUnit.id = `unit-${unitId}`;
+                newUnit.textContent = unitId.split('-')[1];
+                newUnit.dataset.groupId = groupId;
+                newUnit.dataset.unitId = unitId;
+                
+                const group = unitGroups.find(g => g.id == groupId);
+                if (group) {
+                    newUnit.style.background = group.color;
+                    if (group.color === '#d2b48c') {
+                        newUnit.style.color = '#000000';
+                    }
+                }
+                
+                // Add tooltip
+                let tooltipText = group ? `${group.name} - Unit ${unitId.split('-')[1]}` : `Unit ${unitId.split('-')[1]}`;
+                if (unitData[unitId] && unitData[unitId].notes) {
+                    tooltipText += `\n Notes: ${unitData[unitId].notes}`;
+                }
+                newUnit.title = tooltipText;
+                
+                // Add indicators
+                if (unitData[unitId]) {
+                    if (unitData[unitId].waitEngineer) {
+                        const waitIndicator = document.createElement('span');
+                        waitIndicator.className = 'unit-wait-indicator';
+                        waitIndicator.textContent = '🛑';
+                        newUnit.appendChild(waitIndicator);
+                    }
+                    if (unitData[unitId].waitMaterial) {
+                        const waitMaterialIndicator = document.createElement('span');
+                        waitMaterialIndicator.className = 'unit-wait-material-indicator';
+                        waitMaterialIndicator.textContent = '⚙️';
+                        newUnit.appendChild(waitMaterialIndicator);
+                    }
+                    if (unitData[unitId].hot) {
+                        const hotIndicator = document.createElement('span');
+                        hotIndicator.className = 'unit-hot-indicator';
+                        hotIndicator.textContent = '🔥';
+                        newUnit.appendChild(hotIndicator);
+                    }
+                    if (unitData[unitId].complete) {
+                        const completeIndicator = document.createElement('span');
+                        completeIndicator.className = 'unit-complete-indicator';
+                        completeIndicator.textContent = '✓';
+                        newUnit.appendChild(completeIndicator);
+                    }
+                }
+                
+                // Add event listeners
+                let dragStartTime = 0;
+                let isDragging = false;
+                
+                newUnit.addEventListener('dragstart', function(e) {
+                    dragStartTime = Date.now();
+                    isDragging = false;
+                    handleDragStart(e);
+                });
+                
+                newUnit.addEventListener('drag', function() {
+                    isDragging = true;
+                });
+                
+                newUnit.addEventListener('dragend', handleDragEnd);
+                
+                newUnit.addEventListener('click', function(e) {
+                    const clickDuration = Date.now() - dragStartTime;
+                    if (!isDragging && clickDuration < 200) {
+                        openUnitModal(unitId);
+                    }
+                });
+                
+                parentContainer.appendChild(newUnit);
             });
             
             stack.remove();
             currentClickedStack = null;
             updateSelectionToolbar();
-            saveState();
-            drawAllPlanArrows();
+            
+            setTimeout(() => {
+                sortUnitsByNumber(parentContainer);
+                saveState();
+                drawAllPlanArrows();
+            }, 10);
+        }
+        
+        function unstackFromModal() {
+            if (!currentClickedStack) return;
+            
+            closeUnitModal();
+            unstackClickedStack();
         }
 
         function openUnitModal(unitId) {
@@ -3509,7 +3672,16 @@
                             units.forEach(unit => {
                                 unit.classList.remove('selected');
                                 unit.draggable = false;
-                                stackContainer.appendChild(unit);
+                                
+                                const clonedUnit = unit.cloneNode(true);
+                                clonedUnit.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                    currentClickedStack = stackContainer;
+                                    openSelectionModal();
+                                });
+                                
+                                stackContainer.appendChild(clonedUnit);
+                                unit.remove();
                             });
                             
                             const badge = document.createElement('div');
@@ -3521,12 +3693,16 @@
                             stackContainer.addEventListener('dragstart', handleStackDragStart);
                             stackContainer.addEventListener('dragend', handleStackDragEnd);
                             stackContainer.addEventListener('click', function(e) {
-                                if (e.detail === 1) {
-                                    currentClickedStack = stackContainer;
-                                    updateSelectionToolbar();
-                                }
+                                console.log('Restored stack clicked', e.target);
+                                currentClickedStack = stackContainer;
+                                updateSelectionToolbar();
                             });
-                            stackContainer.addEventListener('dblclick', unstackUnits);
+                            stackContainer.addEventListener('dblclick', function(e) {
+                                if (e.target.classList.contains('unit') || e.target.closest('.unit')) {
+                                    return;
+                                }
+                                unstackUnits(e);
+                            });
                             
                             parentContainer.appendChild(stackContainer);
                             requestAnimationFrame(() => positionStackUnits(stackContainer));
