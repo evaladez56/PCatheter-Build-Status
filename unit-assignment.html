@@ -1666,11 +1666,15 @@
         }
 
         const availableColors = [
-            { name: 'Purple', value: '#667eea' },
             { name: 'Green', value: '#28a745' },
             { name: 'Hot Pink', value: '#ff1493' },
             { name: 'Tan', value: '#d2b48c' },
-            { name: 'Black', value: '#212529' }
+            { name: 'Black', value: '#212529' },
+            { name: 'Grey', value: '#6c757d' },
+            { name: 'Deep Purple', value: '#6f42c1' },
+            { name: 'Blue', value: '#007bff' },
+            { name: 'Orange', value: '#fd7e14' },
+            { name: 'Lime Green', value: '#32cd32' }
         ];
 
         function createUnitGroup(name, color) {
@@ -1877,7 +1881,7 @@
                     }
                     unit.title = tooltipText;
                     
-                    if (group.color === '#d2b48c') {
+                    if (group.color === '#d2b48c' || group.color === '#32cd32' || group.color === '#fd7e14') {
                         unit.style.color = '#000000';
                     }
                     
@@ -2389,53 +2393,26 @@
         }
 
         function resetAssignments() {
-            // Dissolve all stacks first, restoring units to normal draggable state
-            document.querySelectorAll('.unit-stack').forEach(stack => {
-                const units = Array.from(stack.querySelectorAll('.unit'));
-                const parent = stack.parentElement;
-                units.forEach(unit => {
-                    unit.style.position = '';
-                    unit.style.left = '';
-                    unit.style.top = '';
-                    unit.style.zIndex = '';
-                    unit.style.opacity = '';
-                    unit.draggable = true;
-                    if (parent) parent.appendChild(unit);
-                });
-                stack.remove();
-            });
-
+            // Clear all groups and reset counters
+            unitGroups.length = 0;
+            groupCounter = 1;
+            
+            // Clear all unit data
+            Object.keys(unitData).forEach(key => delete unitData[key]);
+            
+            // Clear stacks
             currentClickedStack = null;
             clearSelection();
-
-            const allUnits = document.querySelectorAll('.unit');
             
-            allUnits.forEach(unit => {
-                const unitId = unit.dataset.unitId;
-                
-                if (unitData[unitId]) {
-                    unitData[unitId] = {
-                        notes: '',
-                        hot: false,
-                        complete: false,
-                        waitEngineer: false,
-                        waitMaterial: false,
-                        planForToday: ''
-                    };
-                    updateUnitAppearance(unit, unitId);
-                }
-                
-                const groupId = unit.dataset.groupId;
-                const groupPool = document.getElementById(`group-${groupId}-pool`);
-                if (groupPool) {
-                    groupPool.appendChild(unit);
-                }
-            });
-            
+            // Clear global notes
             const globalNotes = document.getElementById('globalNotes');
             const notesDisplay = document.getElementById('notesDisplay');
             if (globalNotes) globalNotes.value = '';
             if (notesDisplay) notesDisplay.textContent = '';
+            
+            // Re-render the UI (this will show empty state with no groups)
+            renderUnitGroups();
+            renderSectionGroups();
             
             setTimeout(() => {
                 drawAllPlanArrows();
@@ -2827,7 +2804,7 @@
                 const group = unitGroups.find(g => g.id == groupId);
                 if (group) {
                     newUnit.style.background = group.color;
-                    if (group.color === '#d2b48c') {
+                    if (group.color === '#d2b48c' || group.color === '#32cd32' || group.color === '#fd7e14') {
                         newUnit.style.color = '#000000';
                     }
                 }
@@ -3038,7 +3015,7 @@
             }
             unitElement.title = tooltipText;
             
-            if (group && group.color === '#d2b48c') {
+            if (group && (group.color === '#d2b48c' || group.color === '#32cd32' || group.color === '#fd7e14')) {
                 unitElement.style.color = '#000000';
             } else {
                 unitElement.style.color = '';
