@@ -774,9 +774,61 @@
             font-size: 0.9em;
             resize: vertical;
         }
+        
+        .notes-table {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .notes-column {
+            background: white;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            min-height: 80px;
+        }
+        
+        .notes-column textarea {
+            width: 100%;
+            min-height: 60px;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.85em;
+            resize: vertical;
+        }
+        
+        .notes-column h4 {
+            margin: 0 0 8px 0;
+            color: #495057;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
 
         .notes-display-section {
             margin-bottom: 6px;
+        }
+        
+        .notes-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        .notes-display-column {
+            background: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            min-height: 40px;
+            font-size: 0.9em;
+            color: #495057;
+            word-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .section {
@@ -1125,7 +1177,12 @@
         
         <div class="content">
             <div class="notes-display-section">
-                <div class="notes-display" id="notesDisplay"></div>
+                <div class="notes-display">
+                    <div class="notes-display-column" id="notesDisplay1"></div>
+                    <div class="notes-display-column" id="notesDisplay2"></div>
+                    <div class="notes-display-column" id="notesDisplay3"></div>
+                    <div class="notes-display-column" id="notesDisplay4"></div>
+                </div>
             </div>
 
             <div class="section">
@@ -1150,7 +1207,25 @@
 
         <div class="notes-section">
             <h3>Notes</h3>
-            <textarea id="globalNotes" placeholder="Enter notes here..."></textarea>
+            <div class="notes-table">
+                <div class="notes-column">
+                    <h4>Column 1</h4>
+                    <textarea id="notesColumn1" placeholder="Enter notes..."></textarea>
+                </div>
+                <div class="notes-column">
+                    <h4>Column 2</h4>
+                    <textarea id="notesColumn2" placeholder="Enter notes..."></textarea>
+                </div>
+                <div class="notes-column">
+                    <h4>Column 3</h4>
+                    <textarea id="notesColumn3" placeholder="Enter notes..."></textarea>
+                </div>
+                <div class="notes-column">
+                    <h4>Column 4</h4>
+                    <textarea id="notesColumn4" placeholder="Enter notes..."></textarea>
+                </div>
+            </div>
+            <textarea id="globalNotes" style="display: none;"></textarea>
         </div>
 
         <div class="product-section">
@@ -1375,7 +1450,31 @@
                         const notesTextarea = document.getElementById('globalNotes');
                         const notesDisplay = document.getElementById('notesDisplay');
                         if (notesTextarea) notesTextarea.value = state.notes;
-                        if (notesDisplay) notesDisplay.textContent = state.notes || 'These are the notes';
+                        
+                        // Try to parse as JSON for 4-column format
+                        try {
+                            const notesData = JSON.parse(state.notes);
+                            if (typeof notesData === 'object') {
+                                // Populate 4 columns
+                                ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'].forEach(columnId => {
+                                    const textarea = document.getElementById(columnId);
+                                    if (textarea && notesData[columnId]) {
+                                        textarea.value = notesData[columnId];
+                                    }
+                                });
+                                // Update display columns
+                                ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach((displayId, idx) => {
+                                    const displayCol = document.getElementById(displayId);
+                                    const columnId = `notesColumn${idx + 1}`;
+                                    if (displayCol) {
+                                        displayCol.textContent = notesData[columnId] || '';
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            // Legacy format - just display as text
+                            if (notesDisplay) notesDisplay.textContent = state.notes || 'These are the notes';
+                        }
                     }
                     
                     return true;
@@ -1388,16 +1487,40 @@
         }
         
         window.addEventListener('DOMContentLoaded', () => {
-            const notesTextarea = document.getElementById('globalNotes');
-            if (notesTextarea) {
-                notesTextarea.addEventListener('input', (e) => {
-                    const notesDisplay = document.getElementById('notesDisplay');
-                    if (notesDisplay) {
-                        notesDisplay.textContent = e.target.value || 'These are the notes';
+            // Handle 4-column notes
+            const notesColumns = ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'];
+            
+            function syncNotesToGlobal() {
+                const globalNotes = document.getElementById('globalNotes');
+                const notesData = {};
+                notesColumns.forEach(columnId => {
+                    const textarea = document.getElementById(columnId);
+                    if (textarea) {
+                        notesData[columnId] = textarea.value;
                     }
-                    saveState();
                 });
+                if (globalNotes) {
+                    globalNotes.value = JSON.stringify(notesData);
+                }
+                
+                // Update display columns
+                ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach((displayId, idx) => {
+                    const displayCol = document.getElementById(displayId);
+                    const columnId = `notesColumn${idx + 1}`;
+                    if (displayCol) {
+                        displayCol.textContent = notesData[columnId] || '';
+                    }
+                });
+                
+                saveState();
             }
+            
+            notesColumns.forEach(columnId => {
+                const textarea = document.getElementById(columnId);
+                if (textarea) {
+                    textarea.addEventListener('input', syncNotesToGlobal);
+                }
+            });
         });
 
         const productStations = {
@@ -2404,11 +2527,20 @@
             currentClickedStack = null;
             clearSelection();
             
-            // Clear global notes
+            // Clear global notes and all 4 columns
             const globalNotes = document.getElementById('globalNotes');
-            const notesDisplay = document.getElementById('notesDisplay');
             if (globalNotes) globalNotes.value = '';
-            if (notesDisplay) notesDisplay.textContent = '';
+            
+            ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'].forEach(columnId => {
+                const textarea = document.getElementById(columnId);
+                if (textarea) textarea.value = '';
+            });
+            
+            // Clear display columns
+            ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach(displayId => {
+                const displayCol = document.getElementById(displayId);
+                if (displayCol) displayCol.textContent = '';
+            });
             
             // Re-render the UI (this will show empty state with no groups)
             renderUnitGroups();
@@ -3588,12 +3720,47 @@
             
             const notesTextarea = document.getElementById('globalNotes');
             const notesDisplay = document.getElementById('notesDisplay');
+            
+            // Clear all note columns first
+            ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'].forEach(columnId => {
+                const textarea = document.getElementById(columnId);
+                if (textarea) textarea.value = '';
+            });
+            
             if (savedProductState && savedProductState.notes) {
                 if (notesTextarea) notesTextarea.value = savedProductState.notes;
-                if (notesDisplay) notesDisplay.textContent = savedProductState.notes || 'These are the notes';
+                
+                // Try to parse as JSON for 4-column format
+                try {
+                    const notesData = JSON.parse(savedProductState.notes);
+                    if (typeof notesData === 'object') {
+                        // Populate 4 columns
+                        ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'].forEach(columnId => {
+                            const textarea = document.getElementById(columnId);
+                            if (textarea && notesData[columnId]) {
+                                textarea.value = notesData[columnId];
+                            }
+                        });
+                        // Update display columns
+                        ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach((displayId, idx) => {
+                            const displayCol = document.getElementById(displayId);
+                            const columnId = `notesColumn${idx + 1}`;
+                            if (displayCol) {
+                                displayCol.textContent = notesData[columnId] || '';
+                            }
+                        });
+                    }
+                } catch (e) {
+                    // Legacy format - just display as text
+                    if (notesDisplay) notesDisplay.textContent = savedProductState.notes || 'These are the notes';
+                }
             } else {
                 if (notesTextarea) notesTextarea.value = '';
-                if (notesDisplay) notesDisplay.textContent = 'These are the notes';
+                // Clear all display columns
+                ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach(displayId => {
+                    const displayCol = document.getElementById(displayId);
+                    if (displayCol) displayCol.textContent = '';
+                });
             }
             
             populatePlanForTodayDropdown();
