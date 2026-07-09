@@ -93,6 +93,16 @@
             gap: 30px;
         }
 
+        .section-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .section-row .section {
+            min-width: 0;
+        }
+
         .section {
             background: #f8f9fa;
             padding: 20px;
@@ -1177,12 +1187,7 @@
         
         <div class="content">
             <div class="notes-display-section">
-                <div class="notes-display">
-                    <div class="notes-display-column" id="notesDisplay1"></div>
-                    <div class="notes-display-column" id="notesDisplay2"></div>
-                    <div class="notes-display-column" id="notesDisplay3"></div>
-                    <div class="notes-display-column" id="notesDisplay4"></div>
-                </div>
+                <div class="notes-display" id="notesDisplay"></div>
             </div>
 
             <div class="section">
@@ -1207,25 +1212,7 @@
 
         <div class="notes-section">
             <h3>Notes</h3>
-            <div class="notes-table">
-                <div class="notes-column">
-                    <h4>Column 1</h4>
-                    <textarea id="notesColumn1" placeholder="Enter notes..."></textarea>
-                </div>
-                <div class="notes-column">
-                    <h4>Column 2</h4>
-                    <textarea id="notesColumn2" placeholder="Enter notes..."></textarea>
-                </div>
-                <div class="notes-column">
-                    <h4>Column 3</h4>
-                    <textarea id="notesColumn3" placeholder="Enter notes..."></textarea>
-                </div>
-                <div class="notes-column">
-                    <h4>Column 4</h4>
-                    <textarea id="notesColumn4" placeholder="Enter notes..."></textarea>
-                </div>
-            </div>
-            <textarea id="globalNotes" style="display: none;"></textarea>
+            <textarea id="globalNotes" placeholder="Enter notes..."></textarea>
         </div>
 
         <div class="product-section">
@@ -1235,6 +1222,8 @@
                 <button class="product-btn" onclick="switchProduct('peregrine-vp')">Peregrine VP</button>
                 <button class="product-btn" onclick="switchProduct('turbo-vp')">Turbo VP</button>
                 <button class="product-btn" onclick="switchProduct('broadway')">Broadway</button>
+                <button class="product-btn" onclick="switchProduct('odyssey')">Odyssey</button>
+                <button class="product-btn" onclick="switchProduct('fawkes-firebird')">Fawkes/Firebird</button>
             </div>
         </div>
 
@@ -1420,18 +1409,18 @@
                         Object.assign(unitData, state.unitData);
                     }
                     
-                    if (state.sectionGroups) {
-                        sectionGroups.length = 0;
-                        sectionGroups.push(...state.sectionGroups);
-                    }
-                    
                     const product = productStations[currentProduct] || productStations['peregrine-catheter'];
                     const productTitle = getProductTitle();
                     mainTitle = productTitle;
-                    
-                    if (sectionGroups.length >= 2) {
-                        sectionGroups[0].name = product.sectionNames.shaft;
-                        sectionGroups[1].name = product.sectionNames.backend;
+
+                    if ((product.extraSections || []).length > 0 || product.shaftSplit) {
+                        buildDefaultSectionGroups(product);
+                    } else {
+                        if (state.sectionGroups) {
+                            sectionGroups.length = 0;
+                            sectionGroups.push(...state.sectionGroups);
+                        }
+                        applyProductSectionNames(product);
                     }
                     
                     const titleElement = document.querySelector('.title');
@@ -1449,32 +1438,15 @@
                     if (state.notes) {
                         const notesTextarea = document.getElementById('globalNotes');
                         const notesDisplay = document.getElementById('notesDisplay');
-                        if (notesTextarea) notesTextarea.value = state.notes;
-                        
-                        // Try to parse as JSON for 4-column format
+                        let notesText = state.notes;
                         try {
-                            const notesData = JSON.parse(state.notes);
-                            if (typeof notesData === 'object') {
-                                // Populate 4 columns
-                                ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'].forEach(columnId => {
-                                    const textarea = document.getElementById(columnId);
-                                    if (textarea && notesData[columnId]) {
-                                        textarea.value = notesData[columnId];
-                                    }
-                                });
-                                // Update display columns
-                                ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach((displayId, idx) => {
-                                    const displayCol = document.getElementById(displayId);
-                                    const columnId = `notesColumn${idx + 1}`;
-                                    if (displayCol) {
-                                        displayCol.textContent = notesData[columnId] || '';
-                                    }
-                                });
+                            const parsed = JSON.parse(state.notes);
+                            if (typeof parsed === 'object') {
+                                notesText = Object.values(parsed).filter(Boolean).join('\n');
                             }
-                        } catch (e) {
-                            // Legacy format - just display as text
-                            if (notesDisplay) notesDisplay.textContent = state.notes || 'These are the notes';
-                        }
+                        } catch (e) {}
+                        if (notesTextarea) notesTextarea.value = notesText;
+                        if (notesDisplay) notesDisplay.textContent = notesText;
                     }
                     
                     return true;
@@ -1487,40 +1459,14 @@
         }
         
         window.addEventListener('DOMContentLoaded', () => {
-            // Handle 4-column notes
-            const notesColumns = ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'];
-            
-            function syncNotesToGlobal() {
-                const globalNotes = document.getElementById('globalNotes');
-                const notesData = {};
-                notesColumns.forEach(columnId => {
-                    const textarea = document.getElementById(columnId);
-                    if (textarea) {
-                        notesData[columnId] = textarea.value;
-                    }
+            const globalNotes = document.getElementById('globalNotes');
+            if (globalNotes) {
+                globalNotes.addEventListener('input', function() {
+                    const notesDisplay = document.getElementById('notesDisplay');
+                    if (notesDisplay) notesDisplay.textContent = globalNotes.value;
+                    saveState();
                 });
-                if (globalNotes) {
-                    globalNotes.value = JSON.stringify(notesData);
-                }
-                
-                // Update display columns
-                ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach((displayId, idx) => {
-                    const displayCol = document.getElementById(displayId);
-                    const columnId = `notesColumn${idx + 1}`;
-                    if (displayCol) {
-                        displayCol.textContent = notesData[columnId] || '';
-                    }
-                });
-                
-                saveState();
             }
-            
-            notesColumns.forEach(columnId => {
-                const textarea = document.getElementById(columnId);
-                if (textarea) {
-                    textarea.addEventListener('input', syncNotesToGlobal);
-                }
-            });
         });
 
         const productStations = {
@@ -1640,12 +1586,160 @@
                     'Packaging',
                     'Final Confirmation'
                 ]
+            },
+            'odyssey': {
+                title: 'Odyssey Build Status',
+                sectionNames: { shaft: 'Shaft', backend: 'Backend' },
+                inlineExtraSections: true,
+                shaftSplit: 9,
+                extraSections: [
+                    { name: 'Control Ring Sub', stations: [
+                        '10 Control Ring Weld'
+                    ]},
+                    { name: 'Multi Lumen Sub', flex: 4, stations: [
+                        '20 Shaft Liner Stretch',
+                        '30 Spacer Inner Braiding',
+                        '40 Spacer Lamination',
+                        '50 Spacer De-Core/Trim'
+                    ]},
+                    { name: 'Lumen Formation', stations: [
+                        '60 Lumen Liner Formation'
+                    ]}
+                ],
+                shaft: [
+                    '100 Spine Liner Stretch',
+                    '110 Shaft + Spine Lumen Install',
+                    '120 1st Layer Jacket Lamination',
+                    '130 Shaft Braiding',
+                    '140 Braid Termination',
+                    '150 2nd Layer Jacket Lamination',
+                    '160 Shaft De-Core/Trim',
+                    '170 Control Ring/WC/CPs/Outer Fiber Lumen Insertion',
+                    '180 Distal Tip Flare',
+                    '190 Distal Tip Weld',
+                    '200 Shaft Collar Glue',
+                    '210 Pull Wire Crimping',
+                    '220 Anchor Plate Welding',
+                    '230 Chassis Heat Stake/Cover Prep',
+                    '240 Shaft Integration',
+                    '250 Tensioning',
+                    '260 Fiber Integration',
+                    '270 Distal Jacket Extension Lamination'
+                ],
+                backend: [
+                    '280 IPT',
+                    '290 Cover Laser Marking',
+                    '300 Cover Installation',
+                    '310 Proximal Flaring',
+                    '320 Tool Channel Weld',
+                    '330 Authentication',
+                    '340 Verification'
+                ]
+            },
+            'fawkes-firebird': {
+                title: 'Fawkes/Firebird Build Status',
+                sectionNames: { shaft: 'Shaft', backend: 'Backend' },
+                inlineExtraSections: true,
+                shaftSplit: 9,
+                extraSections: [
+                    { name: 'Control Ring Sub', stations: [
+                        '10 Control Ring Weld'
+                    ]},
+                    { name: 'Multi Lumen Sub', flex: 4, stations: [
+                        '20 Shaft Liner Stretch',
+                        '30 Spacer Inner Braiding',
+                        '40 Spacer Lamination',
+                        '50 Spacer De-Core/Trim'
+                    ]},
+                    { name: 'Lumen Formation', stations: [
+                        '60 Lumen Liner Formation'
+                    ]}
+                ],
+                shaft: [
+                    '100 Spine Liner Stretch',
+                    '110 Shaft + Spine Lumen Install',
+                    '120 1st Layer Jacket Lamination',
+                    '130 Shaft Braiding',
+                    '140 Braid Termination',
+                    '150 2nd Layer Jacket Lamination',
+                    '160 Shaft De-Core/Trim',
+                    '170 Control Ring/WC/CPs/Outer Fiber Lumen Insertion',
+                    '180 Distal Tip Flare',
+                    '190 Distal Tip Weld',
+                    '200 Shaft Collar Glue',
+                    '210 Pull Wire Crimping',
+                    '220 Anchor Plate Welding',
+                    '230 Chassis Heat Stake/Cover Prep',
+                    '240 Shaft Integration',
+                    '250 Tensioning',
+                    '260 Fiber Integration',
+                    '270 Distal Jacket Extension Lamination'
+                ],
+                backend: [
+                    '280 IPT',
+                    '290 Cover Laser Marking',
+                    '300 Cover Installation',
+                    '310 Proximal Flaring',
+                    '320 Tool Channel Weld',
+                    '330 Authentication',
+                    '340 Verification'
+                ]
             }
         };
 
+        function applyProductSectionNames(product) {
+            const extraCount = (product.extraSections || []).length;
+            (product.extraSections || []).forEach((extra, i) => {
+                if (sectionGroups[i]) {
+                    sectionGroups[i].name = extra.name;
+                    sectionGroups[i].inlineRow = product.inlineExtraSections ? 'extra' : null;
+                }
+            });
+            const shaftIdx = extraCount;
+            if (sectionGroups[shaftIdx]) sectionGroups[shaftIdx].name = product.sectionNames.shaft;
+            let nextIdx = shaftIdx + 1;
+            if (product.shaftSplit && sectionGroups[nextIdx] && sectionGroups[nextIdx].shaftContinued) {
+                sectionGroups[nextIdx].name = product.sectionNames.shaft + ' (continued)';
+                nextIdx++;
+            }
+            if (sectionGroups[nextIdx]) sectionGroups[nextIdx].name = product.sectionNames.backend;
+        }
+
+        function buildDefaultSectionGroups(product) {
+            sectionGroups.length = 0;
+            let sgId = 1;
+            (product.extraSections || []).forEach(extra => {
+                sectionGroups.push({ id: sgId, name: extra.name, listId: `stationsList${sgId}`, inlineRow: product.inlineExtraSections ? 'extra' : null, flex: extra.flex || 1 });
+                sgId++;
+            });
+            sectionGroups.push({ id: sgId, name: product.sectionNames.shaft, listId: `stationsList${sgId}` });
+            sgId++;
+            if (product.shaftSplit) {
+                sectionGroups.push({ id: sgId, name: product.sectionNames.shaft + ' (continued)', listId: `stationsList${sgId}`, shaftContinued: true });
+                sgId++;
+            }
+            sectionGroups.push({ id: sgId, name: product.sectionNames.backend, listId: `stationsList${sgId}` });
+            sectionGroupCounter = sgId + 1;
+        }
+
+        function createProductStations(product) {
+            (product.extraSections || []).forEach(extra => {
+                const listId = sectionGroups.find(sg => sg.name === extra.name)?.listId;
+                if (listId) extra.stations.forEach(name => createStation(name, listId));
+            });
+            const shaftGroup = sectionGroups.find(sg => sg.name === product.sectionNames.shaft && !sg.shaftContinued);
+            const shaftContGroup = sectionGroups.find(sg => sg.shaftContinued);
+            const backendGroup = sectionGroups.find(sg => sg.name === product.sectionNames.backend);
+            const split = product.shaftSplit || product.shaft.length;
+            product.shaft.slice(0, split).forEach(name => createStation(name, shaftGroup?.listId || 'stationsList1'));
+            product.shaft.slice(split).forEach(name => createStation(name, shaftContGroup?.listId || shaftGroup?.listId || 'stationsList1'));
+            product.backend.forEach(name => createStation(name, backendGroup?.listId || 'stationsList2'));
+        }
+
         function getStationNames() {
             const product = productStations[currentProduct] || productStations['peregrine-catheter'];
-            return [...product.shaft, ...product.backend];
+            const extra = (product.extraSections || []).flatMap(s => s.stations);
+            return [...extra, ...product.shaft, ...product.backend];
         }
 
         function getProductTitle() {
@@ -1658,17 +1752,14 @@
             
             saveLocked = true;
 
+            const product = productStations[currentProduct] || productStations['peregrine-catheter'];
+            if ((product.extraSections || []).length > 0 || product.shaftSplit) {
+                buildDefaultSectionGroups(product);
+            }
+
             rebuildSections();
             
-            const product = productStations[currentProduct] || productStations['peregrine-catheter'];
-            
-            product.shaft.forEach(name => {
-                createStation(name, 'stationsList1');
-            });
-            
-            product.backend.forEach(name => {
-                createStation(name, 'stationsList2');
-            });
+            createProductStations(product);
             
             populatePlanForTodayDropdown();
             renderSectionGroups();
@@ -2528,20 +2619,11 @@
             currentClickedStack = null;
             clearSelection();
             
-            // Clear global notes and all 4 columns
+            // Clear notes
             const globalNotes = document.getElementById('globalNotes');
             if (globalNotes) globalNotes.value = '';
-            
-            ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'].forEach(columnId => {
-                const textarea = document.getElementById(columnId);
-                if (textarea) textarea.value = '';
-            });
-            
-            // Clear display columns
-            ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach(displayId => {
-                const displayCol = document.getElementById(displayId);
-                if (displayCol) displayCol.textContent = '';
-            });
+            const notesDisplay = document.getElementById('notesDisplay');
+            if (notesDisplay) notesDisplay.textContent = '';
             
             // Re-render the UI (this will show empty state with no groups)
             renderUnitGroups();
@@ -3398,26 +3480,48 @@
 
         function rebuildSections() {
             const contentDiv = document.querySelector('.content');
-            const existingSections = contentDiv.querySelectorAll('.section:not(.units-section)');
+            const existingSections = contentDiv.querySelectorAll('.section:not(.units-section), .section-row');
             existingSections.forEach(section => section.remove());
             
             const notesSection = contentDiv.querySelector('.notes-display-section');
+            const inlineGroups = sectionGroups.filter(sg => sg.inlineRow === 'extra');
+            let inlineRowInserted = false;
             
             for (let i = sectionGroups.length - 1; i >= 0; i--) {
                 const sectionGroup = sectionGroups[i];
+                
+                if (sectionGroup.inlineRow === 'extra') {
+                    if (!inlineRowInserted) {
+                        inlineRowInserted = true;
+                        const rowDiv = document.createElement('div');
+                        rowDiv.className = 'section-row';
+                        inlineGroups.forEach(sg => {
+                            const s = document.createElement('div');
+                            s.className = 'section';
+                            s.style.flex = sg.flex || 1;
+                            const h = document.createElement('h2');
+                            h.textContent = sg.name;
+                            const sl = document.createElement('div');
+                            sl.className = 'stations-list';
+                            sl.id = sg.listId;
+                            s.appendChild(h);
+                            s.appendChild(sl);
+                            rowDiv.appendChild(s);
+                        });
+                        contentDiv.insertBefore(rowDiv, notesSection.nextSibling);
+                    }
+                    continue;
+                }
+                
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'section';
-                
                 const heading = document.createElement('h2');
                 heading.textContent = sectionGroup.name;
-                
                 const stationsList = document.createElement('div');
                 stationsList.className = 'stations-list';
                 stationsList.id = sectionGroup.listId;
-                
                 sectionDiv.appendChild(heading);
                 sectionDiv.appendChild(stationsList);
-                
                 contentDiv.insertBefore(sectionDiv, notesSection.nextSibling);
             }
         }
@@ -3662,8 +3766,11 @@
             
             const product = productStations[currentProduct] || productStations['peregrine-catheter'];
             
-            sectionGroups[0].name = product.sectionNames.shaft;
-            sectionGroups[1].name = product.sectionNames.backend;
+            if ((product.extraSections || []).length > 0 || product.shaftSplit) {
+                buildDefaultSectionGroups(product);
+            } else {
+                applyProductSectionNames(product);
+            }
             
             rebuildSections();
             
@@ -3683,35 +3790,23 @@
                     Object.assign(unitData, savedProductState.unitData);
                 }
                 
-                if (savedProductState.sectionGroups) {
+                if (savedProductState.sectionGroups && !((product.extraSections || []).length > 0 || product.shaftSplit)) {
                     sectionGroups.length = 0;
                     sectionGroups.push(...savedProductState.sectionGroups);
-                    sectionGroups[0].name = product.sectionNames.shaft;
-                    sectionGroups[1].name = product.sectionNames.backend;
+                    applyProductSectionNames(product);
                     rebuildSections();
                 }
             } else {
                 unitCounter = 1;
                 stationCounter = 1;
                 groupCounter = 1;
-                sectionGroupCounter = 3;
                 unitGroups.length = 0;
                 Object.keys(unitData).forEach(key => delete unitData[key]);
-                sectionGroups.length = 0;
-                sectionGroups.push(
-                    { id: 1, name: product.sectionNames.shaft, listId: 'stationsList1' },
-                    { id: 2, name: product.sectionNames.backend, listId: 'stationsList2' }
-                );
+                buildDefaultSectionGroups(product);
                 rebuildSections();
             }
             
-            product.shaft.forEach(name => {
-                createStation(name, 'stationsList1');
-            });
-            
-            product.backend.forEach(name => {
-                createStation(name, 'stationsList2');
-            });
+            createProductStations(product);
             
             mainTitle = product.title;
             const titleElement = document.querySelector('.title');
@@ -3722,46 +3817,19 @@
             const notesTextarea = document.getElementById('globalNotes');
             const notesDisplay = document.getElementById('notesDisplay');
             
-            // Clear all note columns first
-            ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'].forEach(columnId => {
-                const textarea = document.getElementById(columnId);
-                if (textarea) textarea.value = '';
-            });
-            
             if (savedProductState && savedProductState.notes) {
-                if (notesTextarea) notesTextarea.value = savedProductState.notes;
-                
-                // Try to parse as JSON for 4-column format
+                let notesText = savedProductState.notes;
                 try {
-                    const notesData = JSON.parse(savedProductState.notes);
-                    if (typeof notesData === 'object') {
-                        // Populate 4 columns
-                        ['notesColumn1', 'notesColumn2', 'notesColumn3', 'notesColumn4'].forEach(columnId => {
-                            const textarea = document.getElementById(columnId);
-                            if (textarea && notesData[columnId]) {
-                                textarea.value = notesData[columnId];
-                            }
-                        });
-                        // Update display columns
-                        ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach((displayId, idx) => {
-                            const displayCol = document.getElementById(displayId);
-                            const columnId = `notesColumn${idx + 1}`;
-                            if (displayCol) {
-                                displayCol.textContent = notesData[columnId] || '';
-                            }
-                        });
+                    const parsed = JSON.parse(savedProductState.notes);
+                    if (typeof parsed === 'object') {
+                        notesText = Object.values(parsed).filter(Boolean).join('\n');
                     }
-                } catch (e) {
-                    // Legacy format - just display as text
-                    if (notesDisplay) notesDisplay.textContent = savedProductState.notes || 'These are the notes';
-                }
+                } catch (e) {}
+                if (notesTextarea) notesTextarea.value = notesText;
+                if (notesDisplay) notesDisplay.textContent = notesText;
             } else {
                 if (notesTextarea) notesTextarea.value = '';
-                // Clear all display columns
-                ['notesDisplay1', 'notesDisplay2', 'notesDisplay3', 'notesDisplay4'].forEach(displayId => {
-                    const displayCol = document.getElementById(displayId);
-                    if (displayCol) displayCol.textContent = '';
-                });
+                if (notesDisplay) notesDisplay.textContent = '';
             }
             
             populatePlanForTodayDropdown();
@@ -3938,15 +4006,6 @@
             }
         });
 
-        const globalNotesElement = document.getElementById('globalNotes');
-        if (globalNotesElement) {
-            globalNotesElement.addEventListener('input', function(e) {
-                const notesDisplay = document.getElementById('notesDisplay');
-                if (notesDisplay) {
-                    notesDisplay.textContent = e.target.value;
-                }
-            });
-        }
 
         document.getElementById('unitModal').addEventListener('click', function(e) {
             if (e.target === this) {
